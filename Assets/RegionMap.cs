@@ -42,7 +42,7 @@ namespace Mapzen
 
         private IO tileIO = new IO();
 
-        private List<TileTask> tasks = new List<TileTask>();
+        private List<ITileTask> tasks;
 
         private int nTasksForArea = 0;
 
@@ -83,7 +83,7 @@ namespace Mapzen
 
                 if (featureCollections != null)
                 {
-                    var task = new TileTask(Style, tileAddress, transform, generation);
+                    var task = new SplineTileTask(Style, tileAddress, transform, generation);
 
                     worker.RunAsync(() =>
                     {
@@ -190,7 +190,8 @@ namespace Mapzen
                 if (task.Generation == generation)
                 {
                     features.AddRange(task.Data);
-                    _handlers.AddRange(task.SplineHandlers);
+                    if(task is SplineTileTask splineTileTask)
+                    _handlers.AddRange(splineTileTask.SplineHandlers);
                 }
             }
 
