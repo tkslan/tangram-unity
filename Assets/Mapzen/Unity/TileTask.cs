@@ -84,25 +84,22 @@ public class TileTask
 
                         if (polylineOptions.Enabled)
                         {
-                            handler = new PolylineBuilder(featureMesh.Mesh, polylineOptions, transform);
+                            handler = new PolylineBuilder(featureMesh.Mesh, polylineOptions, transform , featureName);
+
+                            if (handler is PolylineBuilder pb)
+                            {
+                                pb.OnFinished = list =>
+                                {
+                                    var spline = new SplineHandler(list, featureName, transform);
+                                    SplineHandlers.Add(spline);
+                                };
+                            }
+
+                            feature.HandleGeometry(handler);
+                            data.Add(featureMesh);
                         }
                     }
 
-                    if (handler != null)
-                    {
-                        feature.HandleGeometry(handler);
-                        data.Add(featureMesh);
-                        
-                        if (handler is PolylineBuilder)
-                        {
-                            var spline = new SplineHandler(handler.Points, featureName, transform);
-                            SplineHandlers.Add(spline);
-                        }
-                        else
-                        {
-                            Debug.LogWarning("Handler is not polyline");
-                        }
-                    }
                 }
             }
         }

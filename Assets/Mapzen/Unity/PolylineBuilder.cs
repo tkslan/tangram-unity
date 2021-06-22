@@ -3,6 +3,7 @@ using Mapzen;
 using Mapzen.VectorData;
 using UnityEngine;
 using System.Collections.Generic;
+using TMPro;
 
 namespace Mapzen.Unity
 {
@@ -12,13 +13,13 @@ namespace Mapzen.Unity
         private PolygonBuilder polygonBuilder;
         private List<Vector2> polyline;
         private PolylineOptions options;
-
+        public Action<List<Vector2>> OnFinished;
         private float uvDistance;
-
-        public PolylineBuilder(MeshData outputMeshData, PolylineOptions options, Matrix4x4 transform)
+        private string _name;
+        public PolylineBuilder(MeshData outputMeshData, PolylineOptions options, Matrix4x4 transform, string name = "")
         {
             this.options = options;
-
+            _name = name;
             var polygonOptions = new PolygonOptions();
             polygonOptions.Material = options.Material;
             polygonOptions.Extrusion = options.Extrusion;
@@ -55,6 +56,7 @@ namespace Mapzen.Unity
 
         public void OnEndLineString()
         {
+            OnFinished?.Invoke(polyline);
             if (polyline.Count < 2)
             {
                 return;
