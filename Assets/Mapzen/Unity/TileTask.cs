@@ -3,6 +3,7 @@ using Mapzen;
 using Mapzen.Unity;
 using Mapzen.VectorData;
 using Mapzen.VectorData.Filters;
+using Tomi;
 using UnityEngine;
 
 public class TileTask
@@ -28,9 +29,11 @@ public class TileTask
         get { return data; }
     }
 
+    public List<SplineHandler> SplineHandlers;
     public TileTask(MapStyle featureStyling, TileAddress address, Matrix4x4 transform, int generation)
     {
         this.data = new List<FeatureMesh>();
+        SplineHandlers = new List<SplineHandler>();
         this.address = address;
         this.transform = transform;
         this.generation = generation;
@@ -89,6 +92,16 @@ public class TileTask
                     {
                         feature.HandleGeometry(handler);
                         data.Add(featureMesh);
+                        
+                        if (handler is PolylineBuilder)
+                        {
+                            var spline = new SplineHandler(handler.Points, featureName, transform);
+                            SplineHandlers.Add(spline);
+                        }
+                        else
+                        {
+                            Debug.LogWarning("Handler is not polyline");
+                        }
                     }
                 }
             }

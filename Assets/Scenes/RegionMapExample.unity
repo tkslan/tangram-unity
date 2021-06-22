@@ -38,12 +38,12 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44282705, g: 0.49198186, b: 0.57175136, a: 1}
+  m_IndirectSpecularColor: {r: 0.44282755, g: 0.49198216, b: 0.571752, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 11
+  serializedVersion: 12
   m_GIWorkflowMode: 0
   m_GISettings:
     serializedVersion: 2
@@ -98,7 +98,8 @@ LightmapSettings:
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
   m_LightingDataAsset: {fileID: 0}
-  m_UseShadowmask: 0
+  m_LightingSettings: {fileID: 4890085278179872738, guid: 062d9f5973200214192ef80bfcc15235,
+    type: 2}
 --- !u!196 &4
 NavMeshSettings:
   serializedVersion: 2
@@ -118,6 +119,8 @@ NavMeshSettings:
     manualTileSize: 0
     tileSize: 256
     accuratePlacement: 0
+    maxJobWorkers: 0
+    preserveTilesOutsideBounds: 0
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
@@ -151,14 +154,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   serializedAssetVersion: 1
-  ApiKey: 
+  ApiKey: fa7s5hh5R9mEO_Ws24xsQw
   Area:
     min:
-      longitude: -74.019463
-      latitude: 40.700446
+      longitude: 21.974185
+      latitude: 50.034844
     max:
-      longitude: -73.998306
-      latitude: 40.716939
+      longitude: 21.918567
+      latitude: 50.00374
     zoom: 16
   UnitsPerMeter: 0.1
   RegionName: Manhattan
@@ -167,7 +170,7 @@ MonoBehaviour:
     IsStatic: 0
     GeneratePhysicMeshCollider: 0
     PhysicMaterial: {fileID: 0}
-  Style: {fileID: 11400000, guid: 55b6d5ee799474205b5745d930cce11d, type: 2}
+  Style: {fileID: 11400000, guid: 0075c44af5b374d4fbaafee78eae166c, type: 2}
 --- !u!4 &349009245
 Transform:
   m_ObjectHideFlags: 0
@@ -178,6 +181,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -262,6 +266,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 60, y: 1, z: 100}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 1
@@ -351,6 +356,7 @@ Light:
   m_UseColorTemperature: 0
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
+  m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
 --- !u!4 &2091268525
@@ -363,6 +369,7 @@ Transform:
   m_LocalRotation: {x: 0.4826522, y: -0.24750999, z: 0.14434354, w: 0.82761747}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2

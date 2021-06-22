@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace Mapzen.VectorData
 {
@@ -52,5 +54,6 @@ namespace Mapzen.VectorData
         /// Finish the current Polygon geometry.
         /// </summary>
         void OnEndPolygon();
+        public List<Vector2> Points { get; }
     }
 }

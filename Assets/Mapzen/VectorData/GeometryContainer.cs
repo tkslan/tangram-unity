@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Mapzen.VectorData
 {
@@ -19,6 +20,7 @@ namespace Mapzen.VectorData
 
         protected class Copier : IGeometryHandler
         {
+            public List<Vector2> Points { get; }
             GeometryContainer container;
             List<Point> receiver;
 

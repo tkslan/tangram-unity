@@ -8,6 +8,7 @@ namespace Mapzen.Unity
 {
     public class PolylineBuilder : IGeometryHandler
     {
+        public List<Vector2> Points => polyline;
         private PolygonBuilder polygonBuilder;
         private List<Vector2> polyline;
         private PolylineOptions options;

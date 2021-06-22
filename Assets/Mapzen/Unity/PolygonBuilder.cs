@@ -15,6 +15,7 @@ namespace Mapzen.Unity
             this.options = options;
         }
 
+        public List<Vector2> Points { get; }
         private Matrix4x4 transform;
         private MeshData outputMeshData;
         private PolygonOptions options;

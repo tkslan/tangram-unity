@@ -5,6 +5,7 @@ using UnityEngine;
 using Mapzen.VectorData;
 using Mapzen.Unity;
 using Mapzen.VectorData.Formats;
+using Tomi;
 
 namespace Mapzen
 {
@@ -173,6 +174,7 @@ namespace Mapzen
             return nTasksReady == nTasksForArea;
         }
 
+        [SerializeField] private List<SplineHandler> _handlers;
         public void GenerateSceneGraph()
         {
             if (regionMap != null)
@@ -182,11 +184,13 @@ namespace Mapzen
 
             // Merge all feature meshes
             List<FeatureMesh> features = new List<FeatureMesh>();
+            _handlers = new List<SplineHandler>();
             foreach (var task in tasks)
             {
                 if (task.Generation == generation)
                 {
                     features.AddRange(task.Data);
+                    _handlers.AddRange(task.SplineHandlers);
                 }
             }
 
@@ -195,8 +199,19 @@ namespace Mapzen
 
             regionMap = new GameObject(RegionName);
             var sceneGraph = new SceneGraph(regionMap, GroupOptions, GameObjectOptions, features);
-
+            
             sceneGraph.Generate();
+            DrawSplines();
+        }
+
+        private void DrawSplines()
+        {
+            var splinesParent = new GameObject("Splines");
+            splinesParent.transform.SetParent(transform,false);
+            foreach (var splineHandler in _handlers)
+            {
+                splineHandler.Build(splinesParent.transform);   
+            }
         }
 
         public bool IsValid()
