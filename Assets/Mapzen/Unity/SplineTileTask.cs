@@ -64,21 +64,19 @@ public class SplineTileTask : ITileTask
 
 					// Resulting data for this feature.
 					FeatureMesh featureMesh = new FeatureMesh(address.ToString(), collection.Name, styleLayer.Name, featureName);
-                    
-
-					if (feature.Type == GeometryType.LineString || feature.Type == GeometryType.MultiLineString)
+					
+					if (feature.Type is GeometryType.LineString or GeometryType.MultiLineString)
 					{
 						var polylineOptions = layerStyle.GetPolylineOptions(feature, inverseTileScale);
 
 						if (polylineOptions.Enabled)
 						{
-							var pb = new PolylineBuilder(featureMesh.Mesh, polylineOptions, transform, featureName)
+							var pb = new PolylineBuilder(featureMesh.Mesh, polylineOptions, transform, featureName);
+							
+							pb.OnFinished = list =>
 							{
-								OnFinished = list =>
-								{
-									var spline = new SplineHandler(list, featureName, transform);
-									SplineHandlers.Add(spline);
-								}
+								var spline = new SplineHandler(list, featureName, transform);
+								SplineHandlers.Add(spline);
 							};
 
 							feature.HandleGeometry(pb);
