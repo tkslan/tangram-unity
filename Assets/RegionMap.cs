@@ -201,19 +201,17 @@ namespace Mapzen
 
             regionMap = new GameObject(RegionName);
             var sceneGraph = new SceneGraph(regionMap, GroupOptions, GameObjectOptions, features);
-            
-            sceneGraph.Generate();
             DrawSplines();
+            //sceneGraph.Generate();
+      
         }
 
         private void DrawSplines()
         {
             var splinesParent = new GameObject("Splines");
             splinesParent.transform.SetParent(transform,false);
-            foreach (var splineHandler in _handlers)
-            {
-                splineHandler.Build(splinesParent.transform);   
-            }
+            var controller = splinesParent.AddComponent<SplinesController>();
+            controller.Initialize(_handlers);
         }
 
         public bool IsValid()
