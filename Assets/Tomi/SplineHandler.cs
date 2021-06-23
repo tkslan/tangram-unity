@@ -13,6 +13,7 @@ namespace Tomi
         public bool IsValid => Points is not null && Points.Count >= 2;
         public List<Vector3> Points { get; }
         
+        private const float SamePointsMaxDistance = 1f;
         private const float Height = 1;
         private Matrix4x4 _transformMatrix;
 
@@ -38,14 +39,15 @@ namespace Tomi
         #region JOIN
 
       
+        //TODO: Try with backwards faced splines (last + last) ? 
         public bool CanJoinWith(SplineHandler otherSpline)
         {
             if (!IsValid || !otherSpline.IsValid)
                 return false;
-            
+           
             var otherFirst = otherSpline.Points[0];
             var otherLast = otherSpline.Points[otherSpline.Points.Count - 1];
-
+           
             return isSamePoint(otherFirst, Points[Points.Count - 1]) || isSamePoint(otherLast, Points[0]);
         }
 
@@ -72,30 +74,13 @@ namespace Tomi
                 otherSpline.Invalidate();
                 return true;
             }
-
-            if (isSamePoint(otherFirst, Points[0]))
-            {
-                otherSpline.Points.Reverse();
-                Points.InsertRange(0, otherSpline.Points);
-                otherSpline.Invalidate();
-                return true;
-            }
-
-            if (isSamePoint(otherLast, Points[Points.Count - 1]))
-            {
-                Points.Reverse();
-                Points.RemoveAt(Points.Count - 1);
-                Points.AddRange(otherSpline.Points);
-                otherSpline.Invalidate();
-                return true;
-            }
+            
             return false;
     }
 
         private bool isSamePoint(Vector3 v1, Vector3 v2)
         {
-            var maxDistance = 0.05f;
-            return Vector3.Distance(v1, v2) < Mathf.Abs(maxDistance);
+            return Vector3.Distance(v1, v2) < Mathf.Abs(SamePointsMaxDistance);
         }
 
         #endregion
@@ -106,7 +91,7 @@ namespace Tomi
             
             foreach (var point in points)
             {
-                var p = matrix4X4.MultiplyPoint(new Vector3(point.x,Height,point.y));
+                var p = matrix4X4.MultiplyPoint3x4(new Vector3(point.x,Height,point.y));
                 transformedPoints.Add(p);
             }
 

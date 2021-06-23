@@ -6,24 +6,26 @@ namespace Tomi
 {
 	public class SplinesController : MonoBehaviour
 	{
-		private List<SplineHandler> _rejected;
 		public void Initialize(List<SplineHandler> splineHandlers)
 		{
-			_rejected = new List<SplineHandler>();
+			//Build(splineHandlers); return;
+			
 			var mergedByName = MergeBySameName(splineHandlers);
 		
-			//Build(mergedByName); return;
 			var stringCompare = new SimilarSplinesSearch();
 			var result = stringCompare.FindAllWithSingleDistanceInName(mergedByName);
 			var mergedBySimilarName = MergeBySimilarName(result, mergedByName.Count);
-			Build(mergedBySimilarName);
+			
+			MergeBySimilarPoints(mergedBySimilarName, out var mergedBySamePoint);
+			Build(mergedBySamePoint);
+			Debug.Log($"Summary {splineHandlers.Count } -> {mergedBySamePoint.Count}");
 		}
 
 		private List<SplineHandler> MergeBySimilarName(Dictionary<SplineHandler, List<SplineHandler>> relatedHandlers, int countBefore)
 		{
 			var merged = new List<SplineHandler>();
-			var resultCount = 0;
 			var sumOfAll = 0;
+			
 			foreach (var byName in relatedHandlers)
 			{
 					//Not found any child objects ,add parent to merged
@@ -37,7 +39,7 @@ namespace Tomi
 					var sum = new List<SplineHandler>() {byName.Key};
 					sum.AddRange(byName.Value);
 					sumOfAll += sum.Count;
-					resultCount += JoinSimilarSplinesGroup(sum, out var joinedSplines);
+					MergeBySimilarPoints(sum, out var joinedSplines);
 					merged.AddRange(joinedSplines);
 				
 			} 
@@ -56,7 +58,7 @@ namespace Tomi
 				merged.Clear();
 				foreach (var byName in groupByNames)
 				{
-					resultCount += JoinSimilarSplinesGroup(byName.ToList(), out var joinedSplines);
+					resultCount += MergeBySimilarPoints(byName.ToList(), out var joinedSplines);
 					merged.AddRange(joinedSplines);
 				}
 				
@@ -68,32 +70,41 @@ namespace Tomi
 			return validOnly;
 		}
 
-		private int JoinSimilarSplinesGroup(List<SplineHandler> groupedHandler, out List<SplineHandler> joinedSplines)
+		private int MergeBySimilarPoints(List<SplineHandler> groupedHandler, out List<SplineHandler> joinedSplines)
 		{
 			var resultCount = 0;
-			joinedSplines = new List<SplineHandler>();
-			//Search in names ground and try to merge 
-			foreach (var splineHandler in groupedHandler)
+		   joinedSplines = new List<SplineHandler>(groupedHandler);
+			//TODO: Wee need do/while here 
+			do
 			{
-				if (!splineHandler.IsValid) continue;
-
-				var result = groupedHandler.FindAll(f => f.CanJoinWith(splineHandler));
-				resultCount += result.Count;
-						
-				foreach (var handler in result)
+				resultCount = 0;
+				groupedHandler = new List<SplineHandler>(joinedSplines);
+				joinedSplines.Clear();
+				//Search in names ground and try to merge 
+				foreach (var splineHandler in groupedHandler)
 				{
-					if (splineHandler.Join(handler))
+					if (!splineHandler.IsValid) continue;
+
+					var result = groupedHandler.FindAll(f => f.CanJoinWith(splineHandler));
+					resultCount += result.Count;
+
+					foreach (var handler in result)
 					{
-						Debug.Log($"Merged {splineHandler.Name} -> {handler.Name}");
+						if (splineHandler.Join(handler))
+						{
+							//Debug.Log($"Merged {splineHandler.Name} -> {handler.Name}");
+						}
+						else
+						{
+							Debug.Log("Cant merge this right now");
+						}
 					}
-					else
-					{
-						Debug.Log("Cant merge this right now");
-					}
+
+					joinedSplines.Add(splineHandler);
+
 				}
-						
-				joinedSplines.Add(splineHandler);
-			}
+			} while (resultCount > 0);
+
 
 			Debug.Log($"Reduced: {groupedHandler.Count}-> {joinedSplines.Count} [{resultCount}]");
 			return resultCount;
