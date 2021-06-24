@@ -17,6 +17,7 @@ namespace Mapzen
 
         private const int currentAssetVersion = 1;
         [SerializeField] private int serializedAssetVersion = currentAssetVersion;
+        
 
         // Public fields
         // These are serialized, so renaming them will break asset compatibility.
@@ -38,6 +39,7 @@ namespace Mapzen
 
         public MapStyle Style;
 
+        public bool useTomiMerge;
         // Private fields
 
         private IO tileIO = new IO();
@@ -127,7 +129,8 @@ namespace Mapzen
                             return;
                         }
 
-                        var task = new SplineTileTask(Style, tileAddress, transform, generation);
+                        ITileTask task =  useTomiMerge ? new SplineTileTask(Style, tileAddress, transform, generation):
+                                                         new TileTask(Style, tileAddress, transform, generation);
 
                         worker.RunAsync(() =>
                         {
@@ -201,9 +204,11 @@ namespace Mapzen
 
             regionMap = new GameObject(RegionName);
             var sceneGraph = new SceneGraph(regionMap, GroupOptions, GameObjectOptions, features);
-            DrawSplines();
-            //sceneGraph.Generate();
-      
+            
+            if(useTomiMerge)
+                DrawSplines();
+            else
+                sceneGraph.Generate();
         }
 
         private void DrawSplines()

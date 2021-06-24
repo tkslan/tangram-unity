@@ -27,6 +27,7 @@ namespace Mapzen.Unity.Editor
             GUILayout.EndHorizontal();
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("Style"), true);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("useTomiMerge"), true);
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("Area"), true);
 

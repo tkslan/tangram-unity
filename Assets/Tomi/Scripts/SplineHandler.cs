@@ -1,21 +1,22 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using BezierSolution;
 using UnityEngine;
 
 namespace Tomi
 {
-    public class SplineHandler
+    public partial class SplineHandler
     {
         public string Name { get; private set; }
         public bool IsValid => Points is not null && Points.Count >= 2;
         public List<Vector3> Points { get; }
+        public Matrix4x4 Matrix => _transformMatrix;
         
         private const float SamePointsMaxDistance = 1f;
         private const float Height = 1;
         private Matrix4x4 _transformMatrix;
+        
 
         public void Invalidate()
         {
@@ -98,11 +99,19 @@ namespace Tomi
             return transformedPoints;
         }
 
-        public void Build(Transform parent)
+        public void Build(Transform parent, bool withSpline = true)
         {
             if (Points.Count < 2)
                 return;
+
+            if (withSpline)
+                BuildSpline(parent);
             
+            new SplineMeshBuilder(this).Build(parent);
+        }
+
+        private void BuildSpline(Transform parent)
+        {
             var splineObject = new GameObject(Name);
             splineObject.transform.SetParent(parent, false);
             var spline = splineObject.AddComponent<BezierSpline>();
@@ -115,7 +124,7 @@ namespace Tomi
                 p.position = Points[index];
                 p.Refresh();
             }
-            
+
             spline.ConstructLinearPath();
         }
     }
