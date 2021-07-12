@@ -77,7 +77,7 @@ namespace Tomi
 
 								pb.OnFinished = list =>
 								{
-									var spline = new SplineHandler(list, featureName, transform);
+									var spline = new SplineHandler(list, featureName, transform, polylineOptions);
 									SplineHandlers.Add(spline);
 								};
 

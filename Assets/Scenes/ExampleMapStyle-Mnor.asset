@@ -47,8 +47,8 @@ MonoBehaviour:
         Extrusion: 0
         MinHeight: 0
         MaxHeight: 1
-        Width: 12
-        MiterLimit: 0
+        Width: 1000
+        MiterLimit: 1
         Enabled: 1
   - Name: Minor Roads
     FeatureCollection: 64
@@ -75,7 +75,7 @@ MonoBehaviour:
         Extrusion: 0
         MinHeight: 0
         MaxHeight: 0.75
-        Width: 8
-        MiterLimit: 0
+        Width: 500
+        MiterLimit: 1
         Enabled: 1
   liveUpdateEnabled: 0

@@ -43,11 +43,11 @@ MonoBehaviour:
         MaxHeight: 0
         Enabled: 0
       PolylineBuilder:
-        Material: {fileID: 2100000, guid: ca945bef7446a48c3a7e6c2241195361, type: 2}
+        Material: {fileID: 2100000, guid: 4c0619faa9f87524989ff9fa25868a75, type: 2}
         Extrusion: 0
-        MinHeight: 0
-        MaxHeight: 1
-        Width: 12
-        MiterLimit: 0
+        MinHeight: 0.1
+        MaxHeight: 0.1
+        Width: 1500
+        MiterLimit: 1
         Enabled: 1
   liveUpdateEnabled: 0

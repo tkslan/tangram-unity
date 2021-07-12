@@ -1,30 +1,32 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using BezierSolution;
+using Mapzen.Unity;
 using UnityEngine;
 
 namespace Tomi
 {
-    public partial class SplineHandler
+    public class SplineHandler
     {
         public string Name { get; private set; }
         public bool IsValid => Points is not null && Points.Count >= 2;
         public List<Vector3> Points { get; }
+        public PolylineOptions PolylineOptions => _polylineOptions;
         public Matrix4x4 Matrix => _transformMatrix;
         
         private const float SamePointsMaxDistance = 1f;
         private const float Height = 1;
-        private Matrix4x4 _transformMatrix;
         
-
+        private readonly Matrix4x4 _transformMatrix;
+        private readonly PolylineOptions _polylineOptions;
         public void Invalidate()
         {
             Points.Clear();
         }
-        public SplineHandler(List<Vector2> points, string featureName, Matrix4x4 matrix)
+        public SplineHandler(List<Vector2> points, string featureName, Matrix4x4 matrix, PolylineOptions polylineOptions)
         {
+            
             _transformMatrix = matrix;
+            _polylineOptions = polylineOptions;
             Points = TransformPoints(points, _transformMatrix);
             Name = featureName;
             Debug.Log("Name: "+ Name + " Count:" + Points.Count);

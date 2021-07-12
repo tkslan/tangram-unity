@@ -25,7 +25,7 @@ namespace Tomi
 			return material;
 		}
 
-		public void Build(Transform parent, float width = 0.7f)
+		public void Build(Transform parent)
 		{
 			var pointsData = _splineHandler.Points;
 			var meshData = new MeshData();
@@ -33,19 +33,10 @@ namespace Tomi
 			var v2List = new List<Vector2>();
 			foreach (var vector3 in pointsData)
 			{
-					v2List.Add(new Vector2(vector3.x,vector3.z));
+				v2List.Add(new Vector2(vector3.x,vector3.z));
 			}
 			
-			var options = new PolylineOptions()
-			{
-				Enabled = true, Width = width, Extrusion = ExtrusionType.TopOnly,
-				MiterLimit = 2f,
-				MaxHeight = 0.016f,
-				MinHeight = 0.016f,
-				Material = LoadRoadMaterial()
-			};
-			
-			var builder = new PolylineBuilder(meshData, options, Matrix4x4.identity, _splineHandler.Name);
+			var builder = new PolylineBuilder(meshData, _splineHandler.PolylineOptions, Matrix4x4.identity, _splineHandler.Name);
 			builder.OnBeginLineString();
 
 			for (var index = 0; index < pointsData.Count; index++)

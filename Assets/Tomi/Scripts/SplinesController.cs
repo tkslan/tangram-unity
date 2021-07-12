@@ -114,7 +114,7 @@ namespace Tomi
 		{
 			foreach (var handler in splineHandlers)
 			{
-				handler.Build(transform, false);
+				handler.Build(transform, true);
 			}
 		}
 	}
