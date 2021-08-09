@@ -8,8 +8,6 @@ namespace Tomi
 	{
 		public void Initialize(List<SplineHandler> splineHandlers)
 		{
-			//Build(splineHandlers); return;
-			
 			var mergedByName = MergeBySameName(splineHandlers);
 		
 			var stringCompare = new SimilarSplinesSearch();
@@ -17,10 +15,40 @@ namespace Tomi
 			var mergedBySimilarName = MergeBySimilarName(result, mergedByName.Count);
 			
 			MergeBySimilarPoints(mergedBySimilarName, out var mergedBySamePoint);
+		
 			Build(mergedBySamePoint);
 			Debug.Log($"Summary {splineHandlers.Count } -> {mergedBySamePoint.Count}");
+			FindConnectedSplines(mergedBySamePoint);
 		}
 
+		private Dictionary<SplineHandler, List<SplineHandler>> FindConnectedSplines(List<SplineHandler> splines)
+		{
+			var connected = new Dictionary<SplineHandler, List<SplineHandler>>();
+			
+			foreach (var mainRoad in splines)
+			{
+				foreach (var minorRoad in splines)
+				{
+					if (mainRoad != minorRoad && mainRoad.IsConnectedWith(minorRoad, out var point))
+					{
+						if (!connected.ContainsKey(mainRoad))
+							connected.Add(mainRoad, new List<SplineHandler>() {minorRoad});
+						else
+							connected[mainRoad].Add(minorRoad);
+						
+						var p = GameObject.CreatePrimitive(PrimitiveType.Cube);
+						p.transform.SetParent(transform,false);
+						p.transform.localPosition = point;
+						p.transform.rotation = Quaternion.LookRotation(minorRoad.Points[0] - minorRoad.Points[1]);
+						var scale = Vector3.one * mainRoad.PolylineOptions.Width;
+						p.transform.localScale = scale +( Vector3.one * Mathf.Sqrt(scale.magnitude) / Mathf.PI);
+						Debug.Log($"[{mainRoad.Name}] connected with [{minorRoad.Name}] @ [{point}]");
+					}
+				}
+			}
+			return connected;
+		}
+		
 		private List<SplineHandler> MergeBySimilarName(Dictionary<SplineHandler, List<SplineHandler>> relatedHandlers, int countBefore)
 		{
 			var merged = new List<SplineHandler>();
@@ -114,7 +142,7 @@ namespace Tomi
 		{
 			foreach (var handler in splineHandlers)
 			{
-				handler.Build(transform, true);
+				handler.Build(transform, false);
 			}
 		}
 	}

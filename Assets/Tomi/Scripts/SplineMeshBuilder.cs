@@ -25,7 +25,7 @@ namespace Tomi
 			return material;
 		}
 
-		public void Build(Transform parent)
+		public Mesh Build(Transform parent)
 		{
 			var pointsData = _splineHandler.Points;
 			var meshData = new MeshData();
@@ -48,11 +48,13 @@ namespace Tomi
 
 			var gameObject = new GameObject(_splineHandler.Name);
 			gameObject.transform.parent = parent.transform;
-			
-			GenerateMesh(gameObject, meshData, new Mesh());
+
+			var mesh = new Mesh();
+			GenerateMesh(gameObject, meshData, ref mesh);
+			return mesh;
 		}
 
-		private void GenerateMesh(GameObject gameObject, MeshData meshData, Mesh mesh)
+		private void GenerateMesh(GameObject gameObject, MeshData meshData, ref Mesh mesh)
 		{
 			var meshBucket = meshData.Meshes[0];
 			

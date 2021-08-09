@@ -13,7 +13,7 @@ namespace Tomi
         public PolylineOptions PolylineOptions => _polylineOptions;
         public Matrix4x4 Matrix => _transformMatrix;
         
-        private const float SamePointsMaxDistance = 1f;
+        private const float SamePointsMaxDistance = 0.5f;
         private const float Height = 1;
         
         private readonly Matrix4x4 _transformMatrix;
@@ -47,11 +47,30 @@ namespace Tomi
         {
             if (!IsValid || !otherSpline.IsValid)
                 return false;
-           
+            
+            return isSamePoint(otherSpline.Points[0], Points[Points.Count - 1]) || isSamePoint(otherSpline.Points[otherSpline.Points.Count - 1], Points[0]);
+        }
+
+        public bool IsConnectedWith(SplineHandler otherSpline, out Vector3 connectionPoint)
+        {
+            connectionPoint = Vector2.zero;
+            
+            if (!IsValid || !otherSpline.IsValid)
+                return false;
+            
             var otherFirst = otherSpline.Points[0];
             var otherLast = otherSpline.Points[otherSpline.Points.Count - 1];
-           
-            return isSamePoint(otherFirst, Points[Points.Count - 1]) || isSamePoint(otherLast, Points[0]);
+            for (var index = 0; index < Points.Count; index++)
+            {
+                var point = Points[index];
+                if (isSamePoint(point, otherFirst) || isSamePoint(point, otherLast))
+                {
+                    connectionPoint = point;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public bool Join(SplineHandler otherSpline)
@@ -79,7 +98,7 @@ namespace Tomi
             }
             
             return false;
-    }
+        }
 
         private bool isSamePoint(Vector3 v1, Vector3 v2)
         {
@@ -109,7 +128,7 @@ namespace Tomi
             if (withSpline)
                 BuildSpline(parent);
             
-            new SplineMeshBuilder(this).Build(parent);
+            var mesh = new SplineMeshBuilder(this).Build(parent);
         }
 
         private void BuildSpline(Transform parent)
