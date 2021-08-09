@@ -13,6 +13,8 @@ namespace Tomi
 
 		private const string UvGridMaterialGUID = "7f88baed2a0f94bb3a42f7bc45b5fcf8";
 		private const string AsphaltGUID = "4c0619faa9f87524989ff9fa25868a75";
+		public GameObject GameObject { get; private set; }
+		public Mesh Mesh { get; private set; }
 		public SplineMeshBuilder(SplineHandler splineHandler)
 		{
 			_splineHandler = splineHandler;
@@ -25,7 +27,7 @@ namespace Tomi
 			return material;
 		}
 
-		public Mesh Build(Transform parent)
+		public void Build(Transform parent)
 		{
 			var pointsData = _splineHandler.Points;
 			var meshData = new MeshData();
@@ -46,34 +48,38 @@ namespace Tomi
 	
 			builder.OnEndLineString();
 
-			var gameObject = new GameObject(_splineHandler.Name);
-			gameObject.transform.parent = parent.transform;
+			GameObject = new GameObject(_splineHandler.Name)
+			{
+				transform =
+				{
+					parent = parent.transform
+				}
+			};
 
-			var mesh = new Mesh();
-			GenerateMesh(gameObject, meshData, ref mesh);
-			return mesh;
+			Mesh = new Mesh();
+			GenerateMesh(GameObject, meshData);
 		}
 
-		private void GenerateMesh(GameObject gameObject, MeshData meshData, ref Mesh mesh)
+		private void GenerateMesh(GameObject gameObject, MeshData meshData)
 		{
 			var meshBucket = meshData.Meshes[0];
 			
-			mesh.SetVertices(meshBucket.Vertices);
-			mesh.SetUVs(0, meshBucket.UVs);
-			mesh.subMeshCount = meshBucket.Submeshes.Count;
+			Mesh.SetVertices(meshBucket.Vertices);
+			Mesh.SetUVs(0, meshBucket.UVs);
+			Mesh.subMeshCount = meshBucket.Submeshes.Count;
 			for (int s = 0; s < meshBucket.Submeshes.Count; s++)
 			{
-				mesh.SetTriangles(meshBucket.Submeshes[s].Indices, s);
+				Mesh.SetTriangles(meshBucket.Submeshes[s].Indices, s);
 			}
 
-			mesh.RecalculateNormals();
+			Mesh.RecalculateNormals();
 			
 			var materials = meshBucket.Submeshes.Select(s => s.Material).ToArray();
 			
 			var meshFilterComponent = gameObject.AddComponent<MeshFilter>();
 			var meshRendererComponent = gameObject.AddComponent<MeshRenderer>();
 			meshRendererComponent.materials = materials;
-			meshFilterComponent.mesh = mesh;
+			meshFilterComponent.mesh = Mesh;
 		}
 		
 	}

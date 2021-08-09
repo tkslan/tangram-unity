@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using BezierSolution;
 using Mapzen.Unity;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Tomi
 {
@@ -10,6 +11,7 @@ namespace Tomi
         public string Name { get; private set; }
         public bool IsValid => Points is not null && Points.Count >= 2;
         public List<Vector3> Points { get; }
+        public SplineMeshBuilder Builder { get; }
         public PolylineOptions PolylineOptions => _polylineOptions;
         public Matrix4x4 Matrix => _transformMatrix;
         
@@ -29,6 +31,7 @@ namespace Tomi
             _polylineOptions = polylineOptions;
             Points = TransformPoints(points, _transformMatrix);
             Name = featureName;
+            Builder = new SplineMeshBuilder(this);
             Debug.Log("Name: "+ Name + " Count:" + Points.Count);
         }
         public SplineHandler(List<Vector3> points, string featureName)
@@ -51,21 +54,30 @@ namespace Tomi
             return isSamePoint(otherSpline.Points[0], Points[Points.Count - 1]) || isSamePoint(otherSpline.Points[otherSpline.Points.Count - 1], Points[0]);
         }
 
-        public bool IsConnectedWith(SplineHandler otherSpline, out Vector3 connectionPoint)
+        
+        public bool IsConnectedWith(SplineHandler otherSpline, out ConnectionPoint connectionPoint)
         {
-            connectionPoint = Vector2.zero;
+            connectionPoint = new ConnectionPoint() { Point = Vector2.zero };
             
             if (!IsValid || !otherSpline.IsValid)
                 return false;
             
             var otherFirst = otherSpline.Points[0];
-            var otherLast = otherSpline.Points[otherSpline.Points.Count - 1];
+            var otherLastIndex = otherSpline.Points.Count - 1;
+            var otherLast = otherSpline.Points[otherLastIndex];
             for (var index = 0; index < Points.Count; index++)
             {
                 var point = Points[index];
-                if (isSamePoint(point, otherFirst) || isSamePoint(point, otherLast))
+                
+                if (isSamePoint(point, otherFirst))
                 {
-                    connectionPoint = point;
+                    connectionPoint = new ConnectionPoint(point, index, 0,this, otherSpline);
+                    return true;
+                }
+                
+                if (isSamePoint(point, otherLast))
+                {
+                    connectionPoint = new ConnectionPoint(point, index, otherLastIndex,this, otherSpline);
                     return true;
                 }
             }
@@ -128,7 +140,12 @@ namespace Tomi
             if (withSpline)
                 BuildSpline(parent);
             
-            var mesh = new SplineMeshBuilder(this).Build(parent);
+            if (Builder.GameObject != null)
+                Object.DestroyImmediate(Builder.GameObject);
+            
+            Builder.Build(parent);
+            Assert.IsNotNull(Builder.Mesh);
+            Assert.IsNotNull(Builder.GameObject);
         }
 
         private void BuildSpline(Transform parent)

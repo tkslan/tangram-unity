@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Tomi.Scripts.Intersection;
 using UnityEngine;
 
 namespace Tomi
@@ -15,15 +16,29 @@ namespace Tomi
 			var mergedBySimilarName = MergeBySimilarName(result, mergedByName.Count);
 			
 			MergeBySimilarPoints(mergedBySimilarName, out var mergedBySamePoint);
-		
 			Build(mergedBySamePoint);
+			
+			var intersections = FindConnectedSplines(mergedBySamePoint);
+			foreach (var intersection in intersections)
+			{
+				for (var index = 0; index < intersection.Value.Count; index++)
+				{
+					var i = intersection.Value[index];
+					i.ConnectionPoint.Adjust();
+				}
+			}
+			
+			foreach (var intersection in intersections.SelectMany(s=>s.Value))
+			{
+				SpawnDebugIntersection(intersection);
+			}
+			
 			Debug.Log($"Summary {splineHandlers.Count } -> {mergedBySamePoint.Count}");
-			FindConnectedSplines(mergedBySamePoint);
 		}
 
-		private Dictionary<SplineHandler, List<SplineHandler>> FindConnectedSplines(List<SplineHandler> splines)
+		private Dictionary<SplineHandler, List<Intersection>> FindConnectedSplines(List<SplineHandler> splines)
 		{
-			var connected = new Dictionary<SplineHandler, List<SplineHandler>>();
+			var connected = new Dictionary<SplineHandler, List<Intersection>>();
 			
 			foreach (var mainRoad in splines)
 			{
@@ -31,22 +46,39 @@ namespace Tomi
 				{
 					if (mainRoad != minorRoad && mainRoad.IsConnectedWith(minorRoad, out var point))
 					{
+						var intersection = new Intersection();
 						if (!connected.ContainsKey(mainRoad))
-							connected.Add(mainRoad, new List<SplineHandler>() {minorRoad});
+						{
+							intersection.ConnectionPoint = point;
+							intersection.AddHandler(minorRoad);
+							connected.Add(mainRoad, new List<Intersection>(){intersection});
+						}
 						else
-							connected[mainRoad].Add(minorRoad);
-						
-						var p = GameObject.CreatePrimitive(PrimitiveType.Cube);
-						p.transform.SetParent(transform,false);
-						p.transform.localPosition = point;
-						p.transform.rotation = Quaternion.LookRotation(minorRoad.Points[0] - minorRoad.Points[1]);
-						var scale = Vector3.one * mainRoad.PolylineOptions.Width;
-						p.transform.localScale = scale +( Vector3.one * Mathf.Sqrt(scale.magnitude) / Mathf.PI);
-						Debug.Log($"[{mainRoad.Name}] connected with [{minorRoad.Name}] @ [{point}]");
+						{
+							intersection.ConnectionPoint = point;
+							intersection.AddHandler(minorRoad);
+							connected[mainRoad].Add(intersection);
+						}
 					}
 				}
 			}
 			return connected;
+		}
+
+		public void SpawnDebugIntersection(Intersection i)
+		{
+			var mainRoad = i.ConnectionPoint.MainRoad;
+			var point = i.ConnectionPoint.Point;
+			point.y = 0;
+			var p = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			p.transform.SetParent(mainRoad.Builder.GameObject.transform,false);
+			p.transform.localPosition = point;
+			
+			p.transform.rotation = Quaternion.LookRotation(i.ConnectionPoint.CalculateDirection());
+			var scale = Vector3.one * mainRoad.PolylineOptions.Width;
+			p.transform.localScale = scale +( Vector3.one * Mathf.Sqrt(scale.magnitude) / Mathf.PI);
+			var ih = p.AddComponent<IntersectionHandler>();
+			ih.Initialize(i);
 		}
 		
 		private List<SplineHandler> MergeBySimilarName(Dictionary<SplineHandler, List<SplineHandler>> relatedHandlers, int countBefore)
