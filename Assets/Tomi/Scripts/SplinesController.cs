@@ -16,7 +16,6 @@ namespace Tomi
 			var mergedBySimilarName = MergeBySimilarName(result, mergedByName.Count);
 			
 			MergeBySimilarPoints(mergedBySimilarName, out var mergedBySamePoint);
-			Build(mergedBySamePoint);
 			
 			var intersections = FindConnectedSplines(mergedBySamePoint);
 			foreach (var intersection in intersections)
@@ -24,9 +23,11 @@ namespace Tomi
 				for (var index = 0; index < intersection.Value.Count; index++)
 				{
 					var i = intersection.Value[index];
-					i.ConnectionPoint.Adjust();
+					i.ConnectionPoint.AdjustPoints();
 				}
 			}
+
+			Build(mergedBySamePoint);
 			
 			foreach (var intersection in intersections.SelectMany(s=>s.Value))
 			{
@@ -74,7 +75,7 @@ namespace Tomi
 			p.transform.SetParent(mainRoad.Builder.GameObject.transform,false);
 			p.transform.localPosition = point;
 			
-			p.transform.rotation = Quaternion.LookRotation(i.ConnectionPoint.CalculateDirection());
+			p.transform.rotation = Quaternion.LookRotation(i.ConnectionPoint.CalculateRoadDirection(i.ConnectionPoint.MinorRoad, i.ConnectionPoint.MinorRoadPointIndex));
 			var scale = Vector3.one * mainRoad.PolylineOptions.Width;
 			p.transform.localScale = scale +( Vector3.one * Mathf.Sqrt(scale.magnitude) / Mathf.PI);
 			var ih = p.AddComponent<IntersectionHandler>();
@@ -170,11 +171,11 @@ namespace Tomi
 			return resultCount;
 		}
 
-		private void Build(List<SplineHandler> splineHandlers)
+		private void Build(List<SplineHandler> splineHandlers, bool withSplines =false)
 		{
 			foreach (var handler in splineHandlers)
 			{
-				handler.Build(transform, false);
+				handler.Build(transform, withSplines);
 			}
 		}
 	}

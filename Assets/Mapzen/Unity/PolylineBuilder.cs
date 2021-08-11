@@ -158,14 +158,17 @@ namespace Mapzen.Unity
                         }
                     }
 
-                    polygonBuilder.OnPoint(new Point(lastp1.x, lastp1.y));
-                    polygonBuilder.OnPoint(new Point(lastp0.x, lastp0.y));
-                    polygonBuilder.OnPoint(new Point(p0.x, p0.y));
-                    polygonBuilder.OnPoint(new Point(p1.x, p1.y));
-
-                    // Close the polygon
-                    polygonBuilder.OnPoint(new Point(lastp1.x, lastp1.y));
-
+                    var middlePoint = lastp1 + lastp0 + p0 + p1 / 4;
+                    
+                     polygonBuilder.OnPoint(new Point(lastp1.x, lastp1.y));
+                     polygonBuilder.OnPoint(new Point(lastp0.x, lastp0.y));
+                    // polygonBuilder.OnPoint(new Point(middlePoint.x, middlePoint.y));
+                     polygonBuilder.OnPoint(new Point(p0.x, p0.y));
+                     polygonBuilder.OnPoint(new Point(p1.x, p1.y));
+                     
+                    //Close the polygon
+                     polygonBuilder.OnPoint(new Point(lastp1.x, lastp1.y));
+                    
                     lastp0 = p0;
                     lastp1 = p1;
 
