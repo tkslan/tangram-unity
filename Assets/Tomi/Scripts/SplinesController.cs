@@ -27,11 +27,26 @@ namespace Tomi
 				}
 			}
 
-			Build(mergedBySamePoint);
+			Build(mergedBySamePoint, true);
 			
 			foreach (var intersection in intersections.SelectMany(s=>s.Value))
 			{
 				SpawnDebugIntersection(intersection);
+				var combine = new CombineInstance[intersection.MinorRoads.Count+1];
+				var j = 0;
+				for (j = 0; j < intersection.MinorRoads.Count; j++)
+				{
+					var minor = intersection.MinorRoads[j];
+					combine[j].mesh = minor.Builder.Mesh;
+					combine[j].transform = minor.Matrix;
+					minor.Builder.GameObject.SetActive(false);
+				}
+
+				combine[j].mesh = intersection.ConnectionPoint.MainRoad.Builder.Mesh;
+				combine[j].transform = intersection.ConnectionPoint.MainRoad.Matrix;
+				
+				intersection.ConnectionPoint.MainRoad.Builder.UpdateMesh(new Mesh());
+				intersection.ConnectionPoint.MainRoad.Builder.Mesh.CombineMeshes(combine);
 			}
 			
 			Debug.Log($"Summary {splineHandlers.Count } -> {mergedBySamePoint.Count}");

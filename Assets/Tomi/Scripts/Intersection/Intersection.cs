@@ -55,20 +55,27 @@ namespace Tomi
 		{
 			var dir = CalculateRoadDirection(road, mIndex).normalized * 0.5f;
 
-			var mDist2 = Point - dir;
-			var mDist = Point + dir;
-			//road.Points.Insert(mIndex,Point + dir);
+			var mDistBefore = Point - dir;
+			var mDistAfter = Point + dir;
+			var originalPoint = road.Points[mIndex];
+			
 			if (mIndex > 0 && mIndex + 1 < road.Points.Count)
 			{
-				if (Vector3.Distance(road.Points[mIndex + 1], road.Points[mIndex]) < mDist2.magnitude)
-					road.Points[mIndex - 1] = mDist2;
+				var isPreviousPointIsCloseEnough =
+					Vector3.Distance(road.Points[mIndex - 1], originalPoint) < mDistBefore.magnitude;
+				
+				if (isPreviousPointIsCloseEnough)
+					road.Points[mIndex - 1] = mDistBefore;
 				else
-					road.Points[mIndex] = mDist2;
-
-				if (Vector3.Distance(road.Points[mIndex - 1], road.Points[mIndex]) < mDist.magnitude)
-					road.Points[mIndex + 1] = mDist;
+					road.Points.Insert(mIndex, mDistBefore); 
+				
+				var isNextPointIsCloseEnough =
+					Vector3.Distance(road.Points[mIndex + 1], originalPoint) < mDistAfter.magnitude;
+				
+				if (isNextPointIsCloseEnough)
+					road.Points[mIndex + 1] = mDistAfter;
 				else
-					road.Points[mIndex] = mDist;
+					road.Points.Insert(mIndex, mDistAfter);
 			}
 		}
 		public void Adjust()

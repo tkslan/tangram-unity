@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Buffers;
+using System.Collections.Generic;
 using System.Linq;
 using Mapzen.Unity;
 using Mapzen.VectorData;
@@ -15,6 +17,8 @@ namespace Tomi
 		private const string AsphaltGUID = "4c0619faa9f87524989ff9fa25868a75";
 		public GameObject GameObject { get; private set; }
 		public Mesh Mesh { get; private set; }
+		
+		private MeshFilter _meshFilter;
 		public SplineMeshBuilder(SplineHandler splineHandler)
 		{
 			_splineHandler = splineHandler;
@@ -27,6 +31,13 @@ namespace Tomi
 			return material;
 		}
 
+		public void UpdateMesh(Mesh mesh)
+		{
+			if (_meshFilter == null)
+				throw new Exception("Mesh is not builded yet");
+			Mesh = mesh;
+			_meshFilter.mesh = Mesh;
+		}
 		public void Build(Transform parent)
 		{
 			var pointsData = _splineHandler.Points;
@@ -76,10 +87,10 @@ namespace Tomi
 			
 			var materials = meshBucket.Submeshes.Select(s => s.Material).ToArray();
 			
-			var meshFilterComponent = gameObject.AddComponent<MeshFilter>();
+			_meshFilter = gameObject.AddComponent<MeshFilter>();
 			var meshRendererComponent = gameObject.AddComponent<MeshRenderer>();
 			meshRendererComponent.materials = materials;
-			meshFilterComponent.mesh = Mesh;
+			_meshFilter.mesh = Mesh;
 		}
 		
 	}
