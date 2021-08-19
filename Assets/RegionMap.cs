@@ -156,6 +156,60 @@ namespace Mapzen
             }
         }
 
+        public void CreateIntersectionTest()
+        {
+            var polylineOptions = new PolylineOptions()
+            {
+                Enabled = true,
+                Extrusion = 0,
+                Material = new Material(Shader.Find("Standard")),
+                MinHeight = 1f,
+                MaxHeight = 1f,
+                MiterLimit = 1f,
+                Width = 1f
+            };
+            
+            var testGo = new GameObject("IntersectionTest");
+
+            var mainHandler = new SplineHandler(new List<Vector2>()
+                {
+                    new (0, -2),
+                    new (0,0), //special case for intersection connection
+                    new (0, 2),
+                    new (2, 2)
+                }, "0001", Matrix4x4.identity,polylineOptions);
+            
+
+            var secondHandler = new SplineHandler(new List<Vector2>()
+                {
+                    new (2, 2),
+                    new (4, 2),
+                    new (4, 0)
+                }, "0002", Matrix4x4.identity, polylineOptions);
+
+
+            var thirdHandler = new SplineHandler(new List<Vector2>()
+            {
+                new (0,0),
+                new (2,0),
+                new (2,-1),
+                new (2,-2),
+
+            }, "0003", Matrix4x4.identity, polylineOptions);
+
+            var forthHandler = new SplineHandler(new List<Vector2>()
+            {
+                new (2,-2),
+                new (2,-3),
+                new (-1,-3),
+                new (-2,-3),
+            }, "0004", Matrix4x4.identity, polylineOptions);
+            
+            var controller = testGo.AddComponent<SplinesController>();
+            
+            controller.Initialize(new List<SplineHandler>(){mainHandler, secondHandler, thirdHandler,forthHandler});
+        }
+
         public bool HasPendingTasks()
         {
             return nTasksForArea > 0;

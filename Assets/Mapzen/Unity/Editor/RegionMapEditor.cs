@@ -61,6 +61,11 @@ namespace Mapzen.Unity.Editor
                 }
             }
 
+            if (GUILayout.Button("Intersection test"))
+            {
+                map.CreateIntersectionTest();
+            }
+
             if (map.HasPendingTasks())
             {
                 // Go through another OnInspectorGUI cycle
