@@ -18,27 +18,49 @@ namespace Tomi
 			MergeBySimilarPoints(mergedBySimilarName, out var mergedBySamePoint);
 			
 			var intersections = FindConnectedSplines(mergedBySamePoint);
-			foreach (var intersection in intersections)
-			{
-				for (var index = 0; index < intersection.Value.Count; index++)
-				{
-					var i = intersection.Value[index];
-					i.ConnectionPoint.AdjustPoints();
-				}
-			}
-
-			Build(mergedBySamePoint, true);
 			
-			foreach (var intersection in intersections.SelectMany(s=>s.Value))
+			//AdjustConnectionPoints(intersections);
+			
+			Build(mergedBySamePoint, true);
+
+			/*foreach (var intersection in intersections.SelectMany(s=>s.Value))
 			{
 				SpawnDebugIntersection(intersection);
+			}*/
+		
+			//CombineMeshes(intersections);
+
+			Debug.Log($"Summary {splineHandlers.Count } -> {mergedBySamePoint.Count}");
+		}
+
+		private void AdjustConnectionPoints(Dictionary<SplineHandler, List<Intersection>> intersections)
+		{
+			foreach (var intersection in intersections.SelectMany(s=>s.Value))
+			{
+				intersection.ConnectionPoint.AdjustPoints();
+			}
+		}
+		
+		private void CombineMeshes(Dictionary<SplineHandler,List<Intersection>> intersections)
+		{
+			var intersectionsAll = intersections.SelectMany(s => s.Value).ToList();
+			for (int i = 0; i < intersectionsAll.Count; i++)
+			{
+				var intersection = intersectionsAll[i];
+
+				if (intersection.CombinedMesh != null)
+				{
+					Debug.Log("Intersection combined : "+ intersection.ConnectionPoint.MainRoadName);
+					continue;
+				}
+
 				var combine = new CombineInstance[intersection.MinorRoads.Count+1];
 				var j = 0;
 				for (j = 0; j < intersection.MinorRoads.Count; j++)
 				{
 					var minor = intersection.MinorRoads[j];
 					combine[j].mesh = minor.Builder.Mesh;
-					combine[j].transform = minor.Matrix;
+					combine[j].transform = Matrix4x4.zero;
 					minor.Builder.GameObject.SetActive(false);
 				}
 
@@ -46,12 +68,15 @@ namespace Tomi
 				combine[j].transform = intersection.ConnectionPoint.MainRoad.Matrix;
 				
 				intersection.ConnectionPoint.MainRoad.Builder.UpdateMesh(new Mesh());
-				intersection.ConnectionPoint.MainRoad.Builder.Mesh.CombineMeshes(combine);
+				intersection.ConnectionPoint.MainRoad.Builder.Mesh.CombineMeshes(combine, true, false);
+				intersection.CombinedMesh = intersection.ConnectionPoint.MainRoad.Builder.Mesh;
+				for (j = 0; j < intersection.MinorRoads.Count; j++)
+				{
+					var minor = intersection.MinorRoads[j];
+					Destroy(minor.Builder.GameObject);
+				}
 			}
-			
-			Debug.Log($"Summary {splineHandlers.Count } -> {mergedBySamePoint.Count}");
 		}
-
 		private Dictionary<SplineHandler, List<Intersection>> FindConnectedSplines(List<SplineHandler> splines)
 		{
 			var connected = new Dictionary<SplineHandler, List<Intersection>>();

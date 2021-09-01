@@ -17,7 +17,6 @@ namespace Tomi
 		private const string AsphaltGUID = "4c0619faa9f87524989ff9fa25868a75";
 		public GameObject GameObject { get; private set; }
 		public Mesh Mesh { get; private set; }
-		
 		private MeshFilter _meshFilter;
 		public SplineMeshBuilder(SplineHandler splineHandler)
 		{

@@ -143,9 +143,9 @@ namespace Tomi
             if (Builder.GameObject != null)
                 Object.DestroyImmediate(Builder.GameObject);
             
-            Builder.Build(parent);
+            /*Builder.Build(parent);
             Assert.IsNotNull(Builder.Mesh);
-            Assert.IsNotNull(Builder.GameObject);
+            Assert.IsNotNull(Builder.GameObject);*/
         }
 
         private void BuildSpline(Transform parent)

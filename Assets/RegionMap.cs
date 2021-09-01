@@ -137,7 +137,7 @@ namespace Mapzen
                             // Skip any tasks that have been generated for a different generation
                             if (generation == task.Generation)
                             {
-                                // var tileData = new GeoJsonTile(address, response);
+                                 //var tileData = new GeoJsonTile(tileAddress, response.data);
                                 var mvtTile = new MvtTile(tileAddress, response.data);
 
                                 // Save the tile feature collections in the cache for later use
@@ -177,7 +177,7 @@ namespace Mapzen
                     new (0,0), //special case for intersection connection
                     new (0, 2),
                     new (2, 2)
-                }, "0001", Matrix4x4.identity,polylineOptions);
+                }, "0001", Matrix4x4.identity, polylineOptions);
             
 
             var secondHandler = new SplineHandler(new List<Vector2>()
@@ -205,9 +205,17 @@ namespace Mapzen
                 new (-2,-3),
             }, "0004", Matrix4x4.identity, polylineOptions);
             
+            var fifthHandler = new SplineHandler(new List<Vector2>()
+            {
+                new (0,0),
+                new (-2,0),
+                new (-2,2),
+                new (-2,4),
+            }, "0005", Matrix4x4.identity, polylineOptions);
+            
             var controller = testGo.AddComponent<SplinesController>();
             
-            controller.Initialize(new List<SplineHandler>(){mainHandler, secondHandler, thirdHandler,forthHandler});
+            controller.Initialize(new List<SplineHandler>(){mainHandler, secondHandler, thirdHandler,forthHandler, fifthHandler});
         }
 
         public bool HasPendingTasks()

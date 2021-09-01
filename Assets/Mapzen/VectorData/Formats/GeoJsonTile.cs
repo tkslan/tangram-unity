@@ -30,7 +30,7 @@ namespace Mapzen.VectorData.Formats
         public GeoJsonTile(TileAddress address, byte[] data)
         {
             this.address = address;
-            var dataAsString = System.Text.Encoding.Default.GetString(data);
+            var dataAsString = System.Text.Encoding.UTF8.GetString(data);
             tileNode = JSON.Parse(dataAsString);
             projection = LocalCoordinateProjectionForTile(address);
         }

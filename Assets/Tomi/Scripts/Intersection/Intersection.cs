@@ -104,7 +104,7 @@ namespace Tomi
 	{
 		public ConnectionPoint ConnectionPoint;
 		public List<SplineHandler> MinorRoads;
-
+		public Mesh CombinedMesh;
 		public void AddHandler(SplineHandler handler)
 		{
 			MinorRoads ??= new List<SplineHandler>();
