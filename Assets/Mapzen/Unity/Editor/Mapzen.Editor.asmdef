@@ -1,0 +1,17 @@
+{
+    "name": "Mapzen.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:688ee996cf4a2b94a88aeaed86da4c9f",
+        "GUID:542725419bdebdc43be98e2510ad674c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

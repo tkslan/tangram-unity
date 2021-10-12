@@ -6,5 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/RegionMapExample.unity
-    guid: e1030ce9fa8804eae9a841d9a604d7bc
+    path: Assets/Samples/ProBuilder/5.0.3/Runtime Examples/Icosphere FFT/Audio Visualizer.unity
+    guid: 728c74ce1219442780ea2d3e2a24b05b
+  m_configObjects: {}

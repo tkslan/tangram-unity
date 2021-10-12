@@ -25,8 +25,11 @@ namespace Tomi
 
 		private Material LoadRoadMaterial()
 		{
+			Material material = new Material(Shader.Find("Default"));
+#if UNITY_EDITOR
 			var path = AssetDatabase.GUIDToAssetPath(AsphaltGUID);
-			var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+			material = AssetDatabase.LoadAssetAtPath<Material>(path);
+#endif
 			return material;
 		}
 

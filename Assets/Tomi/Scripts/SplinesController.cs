@@ -33,6 +33,10 @@ namespace Tomi
 			Debug.Log($"Summary {splineHandlers.Count } -> {mergedBySamePoint.Count}");
 		}
 
+		private void GenerateProbuilderMesh()
+		{
+			
+		}
 		private void AdjustConnectionPoints(Dictionary<SplineHandler, List<Intersection>> intersections)
 		{
 			foreach (var intersection in intersections.SelectMany(s=>s.Value))

@@ -1,9 +1,7 @@
 ﻿using System;
-using Mapzen;
 using Mapzen.VectorData;
 using UnityEngine;
 using System.Collections.Generic;
-using TMPro;
 
 namespace Mapzen.Unity
 {

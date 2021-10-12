@@ -1,0 +1,17 @@
+{
+    "name": "Tomi",
+    "rootNamespace": "",
+    "references": [
+        "GUID:624c061ee4dfdaf4787b9c0bb51b4c1f",
+        "GUID:688ee996cf4a2b94a88aeaed86da4c9f"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
