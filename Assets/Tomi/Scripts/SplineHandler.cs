@@ -57,7 +57,7 @@ namespace Tomi
         
         public bool IsConnectedWith(SplineHandler otherSpline, out ConnectionPoint connectionPoint)
         {
-            connectionPoint = new ConnectionPoint() { Point = Vector2.zero };
+            connectionPoint = new ConnectionPoint(Vector2.zero);
             
             if (!IsValid || !otherSpline.IsValid)
                 return false;
@@ -143,9 +143,9 @@ namespace Tomi
             if (Builder.GameObject != null)
                 Object.DestroyImmediate(Builder.GameObject);
             
-            /*Builder.Build(parent);
+            Builder.Build(parent);
             Assert.IsNotNull(Builder.Mesh);
-            Assert.IsNotNull(Builder.GameObject);*/
+            Assert.IsNotNull(Builder.GameObject);
         }
 
         private void BuildSpline(Transform parent)

@@ -6,6 +6,8 @@ using Mapzen.Unity;
 using Mapzen.VectorData;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.ProBuilder;
+using UnityEngine.ProBuilder.MeshOperations;
 
 namespace Tomi
 {
@@ -17,6 +19,8 @@ namespace Tomi
 		private const string AsphaltGUID = "4c0619faa9f87524989ff9fa25868a75";
 		public GameObject GameObject { get; private set; }
 		public Mesh Mesh { get; private set; }
+
+		public ProBuilderMesh ProBuilderMesh { get; private set; }
 		private MeshFilter _meshFilter;
 		public SplineMeshBuilder(SplineHandler splineHandler)
 		{
@@ -93,6 +97,10 @@ namespace Tomi
 			var meshRendererComponent = gameObject.AddComponent<MeshRenderer>();
 			meshRendererComponent.materials = materials;
 			_meshFilter.mesh = Mesh;
+			var importer = new MeshImporter(GameObject);
+			importer.Import();
+			_meshFilter.sharedMesh = new Mesh();
+			ProBuilderMesh = GameObject.GetComponent<ProBuilderMesh>();
 		}
 		
 	}

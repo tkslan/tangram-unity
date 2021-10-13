@@ -1,7 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Tomi.Scripts.Intersection;
 using UnityEngine;
+using UnityEngine.ProBuilder;
+using UnityEngine.ProBuilder.MeshOperations;
+using Math = UnityEngine.ProBuilder.Math;
 
 namespace Tomi
 {
@@ -20,30 +24,29 @@ namespace Tomi
 			var intersections = FindConnectedSplines(mergedBySamePoint);
 			
 			//AdjustConnectionPoints(intersections);
-			
+		
 			Build(mergedBySamePoint, true);
-
+			
 			/*foreach (var intersection in intersections.SelectMany(s=>s.Value))
 			{
 				SpawnDebugIntersection(intersection);
-			}*/
-		
-			//CombineMeshes(intersections);
-
-			Debug.Log($"Summary {splineHandlers.Count } -> {mergedBySamePoint.Count}");
-		}
-
-		private void GenerateProbuilderMesh()
-		{
-			
-		}
-		private void AdjustConnectionPoints(Dictionary<SplineHandler, List<Intersection>> intersections)
-		{
-			foreach (var intersection in intersections.SelectMany(s=>s.Value))
-			{
-				intersection.ConnectionPoint.AdjustPoints();
 			}
+			CombineMeshes(intersections);
+			*/
+		
+			//
+			var first = intersections.First(f => f.Key.Name.Equals("0001"));
+			ConnectMainRoadIntersections(first);
 		}
+
+		private void ConnectMainRoadIntersections(KeyValuePair<SplineHandler, List<Intersection>> road)
+		{
+			var first = road.Value.FirstOrDefault();
+			first.ConnectionPoint.UpdateRoadConnectionsMesh();
+		}
+
+		private List<GameObject> processed = new List<GameObject>();
+		
 		
 		private void CombineMeshes(Dictionary<SplineHandler,List<Intersection>> intersections)
 		{
