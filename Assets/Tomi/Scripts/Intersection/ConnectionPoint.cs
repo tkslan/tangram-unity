@@ -40,8 +40,33 @@ namespace Tomi
 
 		public void UpdateRoadConnectionsMesh()
 		{
+			var pbMeshMain = MainRoad.Builder.ProBuilderMesh;
+			var pbMeshMinor = MinorRoad.Builder.ProBuilderMesh;
 			_wingedEdges = BevelMainRoadConnection(out _);
-			AdjustMinorRoadLength();
+			var edgeData = AdjustMinorRoadLength();
+
+			var closestEdgeInMainRoad = FindClosestEdgeToPoint(pbMeshMain, edgeData.Center);
+			Debug.Log($"Closes in main: {closestEdgeInMainRoad.Key}");
+			var newMainMesh = CombineMeshes.Combine(new[] { pbMeshMain, pbMeshMinor }, pbMeshMain)[0];
+			newMainMesh.WeldVertices(newMainMesh.faces.SelectMany(x => x.indexes), 0.5f);
+			newMainMesh.ToMesh();
+			newMainMesh.Refresh();
+		}
+
+		private void Merge(ProBuilderMesh mesh, int[] indexes)
+		{
+			if (indexes.Length > 1)
+			{
+				int newIndex = mesh.MergeVertices(indexes, true);
+
+				var success = newIndex > -1;
+
+				if (success)
+					mesh.SetSelectedVertices(new int[] { newIndex });
+
+				mesh.ToMesh();
+				mesh.Refresh();
+			}
 		}
 
 		private struct EdgeData
@@ -118,7 +143,7 @@ namespace Tomi
 
 			throw new Exception($"No faces in mesh {mesh}");
 		}
-
+		
 		public Vector3 CalculateRoadDirection(SplineHandler road, int index)
 		{
 			var dir = road.Points[0] - road.Points[index];
