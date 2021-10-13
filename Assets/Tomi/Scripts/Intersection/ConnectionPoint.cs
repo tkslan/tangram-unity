@@ -40,17 +40,29 @@ namespace Tomi
 
 		public void UpdateRoadConnectionsMesh()
 		{
+		
 			var pbMeshMain = MainRoad.Builder.ProBuilderMesh;
 			var pbMeshMinor = MinorRoad.Builder.ProBuilderMesh;
 			_wingedEdges = BevelMainRoadConnection(out _);
+			if(_wingedEdges.Count == 0)
+				return;
 			var edgeData = AdjustMinorRoadLength();
 
 			var closestEdgeInMainRoad = FindClosestEdgeToPoint(pbMeshMain, edgeData.Center);
 			Debug.Log($"Closes in main: {closestEdgeInMainRoad.Key}");
 			var newMainMesh = CombineMeshes.Combine(new[] { pbMeshMain, pbMeshMinor }, pbMeshMain)[0];
-			newMainMesh.WeldVertices(newMainMesh.faces.SelectMany(x => x.indexes), 0.5f);
+
 			newMainMesh.ToMesh();
 			newMainMesh.Refresh();
+			
+			if (newMainMesh.faces.Count > 0)
+			{
+				MinorRoad.Invalidate();
+				GameObject.DestroyImmediate(MinorRoad.Builder.GameObject);
+				newMainMesh.WeldVertices(newMainMesh.faces.SelectMany(x => x.indexes), 0.15f);
+				newMainMesh.ToMesh();
+				newMainMesh.Refresh();
+			}
 		}
 
 		private void Merge(ProBuilderMesh mesh, int[] indexes)
@@ -88,7 +100,7 @@ namespace Tomi
 			var edgeCenter = Math.Average(pbMesh.positions, new[] { edge.a, edge.b });
 			var length = (aPos - bPos).magnitude;
 			var dir = (edgeCenter - p).normalized;
-			Debug.Log($"Closest edge on [{splineHandler.Builder.GameObject.name}] is {edge} length {length} dir {dir}");
+			Debug.Log($"Closest edge on [{splineHandler.Name}] is {edge} length {length} dir {dir}");
 			
 			return new EdgeData()
 			{
@@ -101,12 +113,26 @@ namespace Tomi
 		
 		private List<WingedEdge> BevelMainRoadConnection(out EdgeData edgeData)
 		{
+			var wingedEdges = new List<WingedEdge>();
+			
 			var pbMesh = MainRoad.Builder.ProBuilderMesh;
 			edgeData = GetClosesEdge(MainRoad, Point);
+
+			if (pbMesh == null)
+			{
+				Debug.LogError($"Not pbMesh created for [{MainRoad.Name}]");
+				return wingedEdges;
+			}
+
+
 			var newFace = Bevel.BevelEdges(pbMesh, new[] { edgeData.Edge }, edgeData.Length / 2);
-			pbMesh.ToMesh();
-			pbMesh.Refresh();
-			return WingedEdge.GetWingedEdges(pbMesh, newFace);
+			if (newFace?.Count > 0)
+			{
+				pbMesh.ToMesh();
+				pbMesh.Refresh();
+				wingedEdges = WingedEdge.GetWingedEdges(pbMesh, newFace);
+			}
+			return wingedEdges;
 		}
 
 		private EdgeData AdjustMinorRoadLength()

@@ -34,15 +34,20 @@ namespace Tomi
 			CombineMeshes(intersections);
 			*/
 		
-			//
-			var first = intersections.First(f => f.Key.Name.Equals("0001"));
-			ConnectMainRoadIntersections(first);
+			//;
+			foreach (var intersection in intersections)
+			{
+				ConnectMainRoadIntersections(intersection);
+			}
 		}
 
 		private void ConnectMainRoadIntersections(KeyValuePair<SplineHandler, List<Intersection>> road)
 		{
-			var first = road.Value.FirstOrDefault();
-			first.ConnectionPoint.UpdateRoadConnectionsMesh();
+			foreach (var intersection in road.Value)
+			{
+				if (intersection.ConnectionPoint.MinorRoad.IsValid)
+					intersection.ConnectionPoint.UpdateRoadConnectionsMesh();
+			}
 		}
 
 		private List<GameObject> processed = new List<GameObject>();
