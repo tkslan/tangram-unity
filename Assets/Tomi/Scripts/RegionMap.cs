@@ -156,9 +156,9 @@ namespace Mapzen
             }
         }
 
-        public void CreateIntersectionTest()
+        private PolylineOptions DefaultOptions()
         {
-            var polylineOptions = new PolylineOptions()
+            return new PolylineOptions()
             {
                 Enabled = true,
                 Extrusion = 0,
@@ -168,7 +168,13 @@ namespace Mapzen
                 MiterLimit = 1f,
                 Width = 1f
             };
-            
+        }
+        public void CreateIntersectionTest()
+        {
+            var polylineOptions = DefaultOptions();
+
+            #region Simple intersection
+
             var testGo = new GameObject("IntersectionTest");
 
             var mainHandler = new SplineHandler(new List<Vector2>()
@@ -216,6 +222,54 @@ namespace Mapzen
             var controller = testGo.AddComponent<SplinesController>();
             
             controller.Initialize(new List<SplineHandler>(){mainHandler, secondHandler, thirdHandler,forthHandler, fifthHandler});
+            #endregion
+            
+        }
+
+        public void CreateTjunctionAngleTest()
+        {
+            #region Angled t-junctions
+
+            var polylineOptions = DefaultOptions();
+            var testAngle = new GameObject("AngleTest");
+
+            var taMainHandler = new SplineHandler(new List<Vector2>()
+            {
+                new (-2, 3),
+                new (0,1.75f), 
+                new (0.5f, 0),
+                new (0, -1.75f),
+                new (-2,-3),
+            }, "0000", Matrix4x4.identity, polylineOptions);
+            
+            var firstJunction = new SplineHandler(new List<Vector2>()
+            {
+                new (0, 1.75f),
+                new (0,3),
+                new (0,5f),
+                new (0, 7),
+            }, "0001", Matrix4x4.identity, polylineOptions);
+            
+            var secondJunction = new SplineHandler(new List<Vector2>()
+            {
+                new (0, -1.75f),
+                new (2,-2),
+                new (3, -3),
+                new (4, -4),
+            }, "0002", Matrix4x4.identity, polylineOptions);
+
+            var thirdJunction = new SplineHandler(new List<Vector2>()
+            {
+                new(0.5f, 0),
+                new(-1, 0),
+                new(-3, 0),
+                new(-4, 0),
+            }, "0003", Matrix4x4.identity, polylineOptions);
+            
+            var angleController = testAngle.AddComponent<SplinesController>();
+            
+            angleController.Initialize(new List<SplineHandler>(){taMainHandler, firstJunction, secondJunction, thirdJunction});
+            #endregion
         }
 
         public bool HasPendingTasks()

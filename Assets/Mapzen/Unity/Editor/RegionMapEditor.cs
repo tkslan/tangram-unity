@@ -66,6 +66,11 @@ namespace Mapzen.Unity.Editor
                 map.CreateIntersectionTest();
             }
 
+            if (GUILayout.Button("T junction angles test"))
+            {
+                map.CreateTjunctionAngleTest();
+            }
+
             if (map.HasPendingTasks())
             {
                 // Go through another OnInspectorGUI cycle
