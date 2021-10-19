@@ -54,23 +54,19 @@ namespace Tomi
 			var dot = GetDot(edgeData, mainEdge);
 
 			var absDot = Mathf.Abs(dot);
-			if (absDot > 0.4f)
+			
+			if (absDot > 0.1f)
 			{
 				//Move back
-				pbMeshMain.TranslateVertices(new[] { e.edge.local }, edgeData.Dir * -0.3f);
+				var len = edgeData.Length;
+				pbMeshMain.TranslateVertices(new[] { e.edge.local }, -edgeData.Dir * (len /2));
 				var ed = EdgeData.CalculateForEdge(pbMeshMain, e.next.edge.local);
-				
-				pbMeshMain.ToMesh();
-				pbMeshMain.Refresh();
-				
 				
 				var closestEdgeInMainRoad = FindClosestEdgeToPoint(pbMeshMain, edgeData.Center);
 				Debug.Log($"Closes in main: {closestEdgeInMainRoad.Key}");
 				var mc = EdgeData.CalculateForEdge(pbMeshMain, closestEdgeInMainRoad.Key);
-				pbMeshMinor.TranslateVertices(new[]{edgeData.Edge.a},   edgeData.GetCloserEdgePosition(mc.PosA) -mc.PosA);
-				pbMeshMinor.TranslateVertices(new[]{edgeData.Edge.b},   edgeData.GetCloserEdgePosition(mc.PosB) -mc.PosB);
-				pbMeshMinor.ToMesh();
-				pbMeshMinor.Refresh();
+				pbMeshMinor.TranslateVertices(new[]{edgeData.Edge.a},   edgeData.GetCloserEdgePosition(mc.PosA) - mc.PosA);
+				pbMeshMinor.TranslateVertices(new[]{edgeData.Edge.b},   edgeData.GetCloserEdgePosition(mc.PosB) - mc.PosB);
 			}
 			
 			var newMainMesh = CombineMeshes.Combine(new[] { pbMeshMain, pbMeshMinor }, pbMeshMain)[0];
@@ -78,6 +74,8 @@ namespace Tomi
 			newMainMesh.ToMesh();
 			newMainMesh.Refresh();
 			
+			//Do not weld atm
+		
 			if (newMainMesh.faces.Count > 0)
 			{
 				MinorRoad.Invalidate();
