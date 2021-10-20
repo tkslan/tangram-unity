@@ -223,7 +223,6 @@ namespace Mapzen
             
             controller.Initialize(new List<SplineHandler>(){mainHandler, secondHandler, thirdHandler,forthHandler, fifthHandler});
             #endregion
-            
         }
 
         public void CreateTjunctionAngleTest()

@@ -26,7 +26,7 @@ namespace Tomi
 		{
 			_splineHandler = splineHandler;
 		}
-
+		
 		private Material LoadRoadMaterial()
 		{
 			Material material = new Material(Shader.Find("Default"));

@@ -45,8 +45,13 @@ namespace Tomi
 		{
 			foreach (var intersection in road.Value)
 			{
-				if (intersection.ConnectionPoint.MinorRoad.IsValid)
-					intersection.ConnectionPoint.UpdateRoadConnectionsMesh();
+				var point = intersection.ConnectionPoint;
+				
+				if (point.MinorRoad.IsValid)
+				{
+					point.BevelMainRoadConnection();
+					point.UpdateRoadConnectionsMesh();
+				}
 			}
 		}
 

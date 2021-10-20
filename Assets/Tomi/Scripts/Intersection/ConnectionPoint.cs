@@ -8,7 +8,7 @@ using Math = UnityEngine.ProBuilder.Math;
 
 namespace Tomi
 {
-	public partial class ConnectionPoint
+	public class ConnectionPoint
 	{
 		public Vector3 Point { get; }
 		public int MainRoadPointIndex { get; }
@@ -20,8 +20,10 @@ namespace Tomi
 		
 		public Vector3 MainRoadDir => CalculateRoadDirection(MainRoad, MainRoadPointIndex);
 		public Vector3 MinorRoadDir => CalculateRoadDirection(MinorRoad, MinorRoadPointIndex);
-		
+
+		public List<WingedEdge> WingedEdges => _wingedEdges;
 		private List<WingedEdge> _wingedEdges;
+		private EdgeData _bevelPointEdgeData;
 		public ConnectionPoint(Vector3 point, int mainIndex, int minorIndex, SplineHandler mainRoad, SplineHandler minorRoad)
 		{
 			Point = point;
@@ -38,54 +40,80 @@ namespace Tomi
 			Point = point;
 		}
 
+		public void BevelMainRoadConnection()
+		{
+			if (_wingedEdges != null)
+				return;
+			
+			_wingedEdges = BevelMainRoadPoint();
+			
+			if (_wingedEdges == null)
+				throw new NotSupportedException("Error on bevel");
+		}
+		
 		public void UpdateRoadConnectionsMesh()
 		{
-		
 			var pbMeshMain = MainRoad.Builder.ProBuilderMesh;
 			var pbMeshMinor = MinorRoad.Builder.ProBuilderMesh;
 			
-			_wingedEdges = BevelMainRoadConnection(out var mainEdge);
-			if(_wingedEdges.Count == 0) return;
-			
-			var e = _wingedEdges.Find(f => f.opposite == null);
-			var we = EdgeData.CalculateForEdge(pbMeshMain,e.edge.local);
 			var edgeData = AdjustMinorRoadLength();
 			
-			var dot = GetDot(edgeData, mainEdge);
-
-			var absDot = Mathf.Abs(dot);
+			_bevelPointEdgeData = GetClosesEdge(MainRoad, Point);
+			var dot = GetDot(edgeData, _bevelPointEdgeData);
 			
-			if (absDot > 0.1f)
+			//Move back
+			var mc = ReturnClosestEdgeOnMesh(pbMeshMain, edgeData.Center);
+			
+			var e = _wingedEdges.Find(f => f.opposite == null);
+
+			
+			if (Mathf.Abs(dot) > 0.1 && Mathf.Abs(dot) < 0.9)
 			{
-				//Move back
-				var len = edgeData.Length;
-				pbMeshMain.TranslateVertices(new[] { e.edge.local }, -edgeData.Dir * (len /2));
-				var ed = EdgeData.CalculateForEdge(pbMeshMain, e.next.edge.local);
-				
-				var closestEdgeInMainRoad = FindClosestEdgeToPoint(pbMeshMain, edgeData.Center);
-				Debug.Log($"Closes in main: {closestEdgeInMainRoad.Key}");
-				var mc = EdgeData.CalculateForEdge(pbMeshMain, closestEdgeInMainRoad.Key);
-				pbMeshMinor.TranslateVertices(new[]{edgeData.Edge.a},   edgeData.GetCloserEdgePosition(mc.PosA) - mc.PosA);
-				pbMeshMinor.TranslateVertices(new[]{edgeData.Edge.b},   edgeData.GetCloserEdgePosition(mc.PosB) - mc.PosB);
+				var offset = mc.Dir * (mc.Length / 3);
+				if (e != null)
+					pbMeshMain.TranslateVertices(new[] { e.edge.local }, offset);
+				else
+				{
+					pbMeshMain.TranslateVertices(new[] { mc.Edge }, offset);
+					Debug.LogError("No single edge found");
+				}
 			}
+
+			var invert = Mathf.Sign(dot) > 0;
+			var mainVertA = pbMeshMain.VerticesInWorldSpace()[mc.Edge.b];
+			var mainVertB = pbMeshMain.VerticesInWorldSpace()[mc.Edge.a];
+			var vert = pbMeshMinor.GetVertices();
+			vert[edgeData.Edge.a].position = invert ? mainVertB : mainVertA;
+			vert[edgeData.Edge.b].position = invert ? mainVertA : mainVertB;
+			pbMeshMinor.SetVertices(vert);
+			pbMeshMinor.ToMesh();
+			pbMeshMinor.Refresh();
+			
+			return;
 			
 			var newMainMesh = CombineMeshes.Combine(new[] { pbMeshMain, pbMeshMinor }, pbMeshMain)[0];
 
 			newMainMesh.ToMesh();
 			newMainMesh.Refresh();
-			
 			//Do not weld atm
 		
 			if (newMainMesh.faces.Count > 0)
 			{
-				MinorRoad.Invalidate();
 				GameObject.DestroyImmediate(MinorRoad.Builder.GameObject);
-				newMainMesh.WeldVertices(newMainMesh.faces.SelectMany(x => x.indexes), 0.25f);
+				newMainMesh.WeldVertices(newMainMesh.faces.SelectMany(x => x.indexes), 0.15f);
 				newMainMesh.ToMesh();
 				newMainMesh.Refresh();
 			}
 		}
 
+		
+		private EdgeData ReturnClosestEdgeOnMesh(ProBuilderMesh pbMesh, Vector3 point)
+		{
+			var closestEdgeInMainRoad = FindClosestEdgeToPoint(pbMesh, point);
+			Debug.Log($"Closes in main: {closestEdgeInMainRoad.Key}");
+			var mc = EdgeData.CalculateForEdge(pbMesh, closestEdgeInMainRoad.Key);
+			return mc;
+		}
 		private void Merge(ProBuilderMesh mesh, int[] indexes)
 		{
 			if (indexes.Length > 1)
@@ -116,11 +144,11 @@ namespace Tomi
 			return dot;
 		}
 
-		private List<WingedEdge> BevelMainRoadConnection(out EdgeData edgeData)
+		private List<WingedEdge> BevelMainRoadPoint()
 		{
 			var wingedEdges = new List<WingedEdge>();
 			var pbMesh = MainRoad.Builder.ProBuilderMesh;
-			edgeData = GetClosesEdge(MainRoad, Point);
+			var edgeData = GetClosesEdge(MainRoad, Point);
 			if (pbMesh == null)
 			{
 				Debug.LogError($"Not pbMesh created for [{MainRoad.Name}]");
@@ -144,6 +172,7 @@ namespace Tomi
 			pbMesh.TranslateVertices(new[] { edgeData.Edge }, MinorRoadDir * edgeData.Length * 0.5f);
 			pbMesh.ToMesh();
 			pbMesh.Refresh();
+			MinorRoad.Invalidate();
 			return edgeData;
 		}
 		private KeyValuePair<Edge, Vector3> FindClosestEdgeToPoint(ProBuilderMesh mesh, Vector3 point)
