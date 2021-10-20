@@ -58,52 +58,35 @@ namespace Tomi
 			
 			var edgeData = AdjustMinorRoadLength();
 			
+			//Adjust angled connection edges
 			_bevelPointEdgeData = GetClosesEdge(MainRoad, Point);
 			var dot = GetDot(edgeData, _bevelPointEdgeData);
+			var mc = ReturnClosestEdgeOnMesh(pbMeshMain,edgeData.Center);
 			
-			//Move back
-			var mc = ReturnClosestEdgeOnMesh(pbMeshMain, edgeData.Center);
-			
-			var e = _wingedEdges.Find(f => f.opposite == null);
-
-			
+			//Adjust angled connections by offsetting winded edge bit back
 			if (Mathf.Abs(dot) > 0.1 && Mathf.Abs(dot) < 0.9)
 			{
+				var e = _wingedEdges.Find(f => f.opposite == null);
+				var edge = e != null ? e.edge.local : mc.Edge;
 				var offset = mc.Dir * (mc.Length / 3);
-				if (e != null)
-					pbMeshMain.TranslateVertices(new[] { e.edge.local }, offset);
-				else
-				{
-					pbMeshMain.TranslateVertices(new[] { mc.Edge }, offset);
-					Debug.LogError("No single edge found");
-				}
+				pbMeshMain.TranslateVertices(new[] { edge }, offset);
 			}
 
-			var invert = Mathf.Sign(dot) > 0;
+			//Snap vertexes
 			var mainVertA = pbMeshMain.VerticesInWorldSpace()[mc.Edge.b];
 			var mainVertB = pbMeshMain.VerticesInWorldSpace()[mc.Edge.a];
 			var vert = pbMeshMinor.GetVertices();
-			vert[edgeData.Edge.a].position = invert ? mainVertB : mainVertA;
-			vert[edgeData.Edge.b].position = invert ? mainVertA : mainVertB;
+			vert[edgeData.Edge.a].position = mainVertA;
+			vert[edgeData.Edge.b].position = mainVertB;
 			pbMeshMinor.SetVertices(vert);
 			pbMeshMinor.ToMesh();
 			pbMeshMinor.Refresh();
 			
-			return;
+			//Combine to single mesh
+			var mesh = CombineMeshes.Combine(new[] { pbMeshMain, pbMeshMinor }, pbMeshMain);
+			Debug.LogAssertion(mesh.Count > 0);
 			
-			var newMainMesh = CombineMeshes.Combine(new[] { pbMeshMain, pbMeshMinor }, pbMeshMain)[0];
-
-			newMainMesh.ToMesh();
-			newMainMesh.Refresh();
-			//Do not weld atm
-		
-			if (newMainMesh.faces.Count > 0)
-			{
-				GameObject.DestroyImmediate(MinorRoad.Builder.GameObject);
-				newMainMesh.WeldVertices(newMainMesh.faces.SelectMany(x => x.indexes), 0.15f);
-				newMainMesh.ToMesh();
-				newMainMesh.Refresh();
-			}
+			GameObject.DestroyImmediate(MinorRoad.Builder.GameObject);
 		}
 
 		
@@ -118,15 +101,12 @@ namespace Tomi
 		{
 			if (indexes.Length > 1)
 			{
-				int newIndex = mesh.MergeVertices(indexes, true);
+				int newIndex = mesh.MergeVertices(indexes);
 
 				var success = newIndex > -1;
 
 				if (success)
 					mesh.SetSelectedVertices(new int[] { newIndex });
-
-				mesh.ToMesh();
-				mesh.Refresh();
 			}
 		}
 
@@ -154,14 +134,20 @@ namespace Tomi
 				Debug.LogError($"Not pbMesh created for [{MainRoad.Name}]");
 				return wingedEdges;
 			}
+			
 			var newFace = Bevel.BevelEdges(pbMesh, new[] { edgeData.Edge }, edgeData.Length / 2);
-			if (newFace?.Count > 0)
+			
+			if (newFace == null)
 			{
-				wingedEdges = WingedEdge.GetWingedEdges(pbMesh, newFace);
-				pbMesh.ToMesh();
-				pbMesh.Refresh();
+				Debug.LogError(edgeData.Edge);
+				return wingedEdges;
 			}
 			
+			Debug.Log("Bevel done: "+ edgeData.Edge);
+			wingedEdges = WingedEdge.GetWingedEdges(pbMesh, newFace);
+			pbMesh.ToMesh();
+			pbMesh.Refresh();
+
 			return wingedEdges;
 		}
 
@@ -169,12 +155,14 @@ namespace Tomi
 		{
 			var pbMesh = MinorRoad.Builder.ProBuilderMesh;
 			var edgeData = GetClosesEdge(MinorRoad, Point);
-			pbMesh.TranslateVertices(new[] { edgeData.Edge }, MinorRoadDir * edgeData.Length * 0.5f);
+			pbMesh.TranslateVertices(new[] { edgeData.Edge }, MinorRoadDir * (edgeData.Length / 2));
 			pbMesh.ToMesh();
 			pbMesh.Refresh();
 			MinorRoad.Invalidate();
-			return edgeData;
+			//Return new position after translation
+			return GetClosesEdge(MinorRoad, Point);
 		}
+		
 		private KeyValuePair<Edge, Vector3> FindClosestEdgeToPoint(ProBuilderMesh mesh, Vector3 point)
 		{
 			var orderedList = new Dictionary<Edge, float>();

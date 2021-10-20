@@ -36,18 +36,23 @@ namespace Tomi
 			public Vector3 GetCloserEdgePosition(Vector3 pos)
 			{
 				var aDist = Vector3.Distance(PosA, pos);
-				var bDist = Vector3.Distance(PosBWorld, pos);
-				return aDist < bDist ? PosA : PosBWorld;
+				var bDist = Vector3.Distance(PosB, pos);
+				return aDist < bDist ? PosA : PosB;
 			}
 			public Vector3 GetCloserEdgePositionWorld(Vector3 pos)
 			{
 				var aDist = Vector3.Distance(PosAWorld, pos);
-				var bDist = Vector3.Distance(PosB, pos);
-				return aDist < bDist ? PosA : PosBWorld;
+				var bDist = Vector3.Distance(PosBWorld, pos);
+				return aDist < bDist ? PosAWorld : PosBWorld;
 			}
 			private static Vector3 GetWorldPosition(ProBuilderMesh mesh, int index)
 			{
-				var position = mesh.positions[index];
+				return ToWorldPos(mesh, mesh.positions[index]);
+			}
+
+			public static Vector3 ToWorldPos(ProBuilderMesh mesh, Vector3 pos)
+			{
+				var position = pos;
 
 				var l2w = mesh.transform.localToWorldMatrix;
 
