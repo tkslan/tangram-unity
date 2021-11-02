@@ -42,10 +42,8 @@ namespace Tomi
 
 		public void BevelMainRoadConnection()
 		{
-			if (_wingedEdges != null)
-				return;
-			
-			_wingedEdges = BevelMainRoadPoint();
+			if (_wingedEdges == null || _wingedEdges.Count == 0)
+				_wingedEdges = BevelMainRoadPoint();
 			
 			if (_wingedEdges == null)
 				throw new NotSupportedException("Error on bevel");
@@ -56,13 +54,13 @@ namespace Tomi
 			var pbMeshMain = MainRoad.Builder.ProBuilderMesh;
 			var pbMeshMinor = MinorRoad.Builder.ProBuilderMesh;
 			
+			RemoveOverlappedFaces();
 			var edgeData = AdjustMinorRoadLength();
 			
 			//Adjust angled connection edges
 			_bevelPointEdgeData = GetClosesEdge(MainRoad, Point);
 			var dot = GetDot(edgeData, _bevelPointEdgeData);
 			var mc = ReturnClosestEdgeOnMesh(pbMeshMain,edgeData.Center);
-			
 			//Adjust angled connections by offsetting winded edge bit back
 			if (Mathf.Abs(dot) > 0.1 && Mathf.Abs(dot) < 0.9)
 			{
@@ -70,8 +68,16 @@ namespace Tomi
 				var edge = e != null ? e.edge.local : mc.Edge;
 				var offset = mc.Dir * (mc.Length / 3);
 				pbMeshMain.TranslateVertices(new[] { edge }, offset);
+				
+				//Make more space when connection is to narrow
+				if (mc.Length < 1f)
+				{
+					pbMeshMain.TranslateVertices(new [] {mc.Edge.a}, offset / 1.5f);
+					pbMeshMain.TranslateVertices(new [] {mc.Edge.b}, -offset / 1.5f);
+				}
 			}
-
+			
+			
 			//Snap vertexes
 			var mainVertA = pbMeshMain.VerticesInWorldSpace()[mc.Edge.b];
 			var mainVertB = pbMeshMain.VerticesInWorldSpace()[mc.Edge.a];
@@ -80,11 +86,13 @@ namespace Tomi
 			vert[edgeData.Edge.b].position = mainVertB;
 			pbMeshMinor.SetVertices(vert);
 			pbMeshMinor.ToMesh();
-			pbMeshMinor.Refresh();
-			
+
 			//Combine to single mesh
 			var mesh = CombineMeshes.Combine(new[] { pbMeshMain, pbMeshMinor }, pbMeshMain);
-			Debug.LogAssertion(mesh.Count > 0);
+			var first = mesh[0];
+			first.WeldVertices(mesh[0].faces.SelectMany(s => s.indexes), 0.2f);
+			first.ToMesh(MeshTopology.Quads);
+			first.Refresh();
 			
 			GameObject.DestroyImmediate(MinorRoad.Builder.GameObject);
 		}
@@ -128,6 +136,7 @@ namespace Tomi
 		{
 			var wingedEdges = new List<WingedEdge>();
 			var pbMesh = MainRoad.Builder.ProBuilderMesh;
+			
 			var edgeData = GetClosesEdge(MainRoad, Point);
 			if (pbMesh == null)
 			{
@@ -151,12 +160,36 @@ namespace Tomi
 			return wingedEdges;
 		}
 
+		private void RemoveOverlappedFaces()
+		{
+			var pbMinor = MinorRoad.Builder.ProBuilderMesh;
+			var p2d = new Vector2(Point.x, Point.z);
+			var facesToCheck = FindClosestFaceToPoint(pbMinor, Point);
+			if (facesToCheck == null) return;
+			
+			foreach (var pair in facesToCheck)
+			{
+				//Use 2d vector, Y pos is different
+				var v2d = new Vector2(pair.Value.x, pair.Value.z);
+				if (Vector2.Distance(v2d, p2d) < 1f)
+				{
+					pbMinor.DeleteFace(pair.Key);
+					pbMinor.ToMesh();
+					Debug.LogWarning($"Removed face:{pair.Key}");
+				}
+			}
+		}
 		private EdgeData AdjustMinorRoadLength()
 		{
 			var pbMesh = MinorRoad.Builder.ProBuilderMesh;
 			var edgeData = GetClosesEdge(MinorRoad, Point);
+			if (MainRoad.Name.Equals("616321508"))
+			{
+				Debug.Log(MinorRoadDir);
+				pbMesh.TranslateVertices(new[] { edgeData.Edge }, -MinorRoadDir * (edgeData.Length / 2));
+			}
 			pbMesh.TranslateVertices(new[] { edgeData.Edge }, MinorRoadDir * (edgeData.Length / 2));
-			pbMesh.ToMesh();
+			pbMesh.ToMesh(MeshTopology.Quads);
 			pbMesh.Refresh();
 			MinorRoad.Invalidate();
 			//Return new position after translation
@@ -188,7 +221,31 @@ namespace Tomi
 
 			throw new Exception($"No faces in mesh {mesh}");
 		}
-		
+
+		private List<KeyValuePair<Face, Vector3>> FindClosestFaceToPoint(ProBuilderMesh mesh, Vector3 point)
+		{
+			var orderedList = new Dictionary<Face, Vector3>();
+			//Don't use on to small objects
+			if (mesh.faceCount <= 2)
+				return null;	
+			
+			foreach (var face in mesh.faces)
+			{
+				var edgesCenter = face.edges.Select(edge => Math.Average(mesh.positions, new[] {edge.a, edge.b})).ToList();
+				//calculate average position of face
+				var pos = Math.Average(edgesCenter);
+				orderedList.Add(face, pos);
+			}
+
+			if (orderedList.Count > 0)
+			{
+				var orderedEnumerable = orderedList.OrderBy(o => Vector3.Distance(o.Value, point));
+				return orderedEnumerable.ToList();
+			}
+
+			return null;
+		}
+
 		public Vector3 CalculateRoadDirection(SplineHandler road, int index)
 		{
 			var dir = road.Points[0] - road.Points[index];
