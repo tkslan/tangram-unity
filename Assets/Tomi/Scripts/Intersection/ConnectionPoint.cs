@@ -53,50 +53,98 @@ namespace Tomi
 		{
 			var pbMeshMain = MainRoad.Builder.ProBuilderMesh;
 			var pbMeshMinor = MinorRoad.Builder.ProBuilderMesh;
-			
-			RemoveOverlappedFaces();
+
 			var edgeData = AdjustMinorRoadLength();
+
+			var edgeToSnap = ReturnClosestEdgeOnMesh(pbMeshMain, edgeData.Center);
 			
-			//Adjust angled connection edges
-			_bevelPointEdgeData = GetClosesEdge(MainRoad, Point);
-			var dot = GetDot(edgeData, _bevelPointEdgeData);
-			var mc = ReturnClosestEdgeOnMesh(pbMeshMain,edgeData.Center);
-			//Adjust angled connections by offsetting winded edge bit back
-			if (Mathf.Abs(dot) > 0.1 && Mathf.Abs(dot) < 0.9)
+			var angleSelected = 0f;
+			var faceCenter = Vector3.zero;
+			if (FindClosestFacesToPoint(pbMeshMain, edgeData.Center, out var orderedFaces))
 			{
-				var e = _wingedEdges.Find(f => f.opposite == null);
-				var edge = e != null ? e.edge.local : mc.Edge;
-				var offset = mc.Dir * (mc.Length / 3);
-				pbMeshMain.TranslateVertices(new[] { edge }, offset);
+				var edgeDatas = new List<EdgeData>();
+				var firstFace = orderedFaces.FirstOrDefault();
+				faceCenter = firstFace.Value;
 				
-				//Make more space when connection is to narrow
-				if (mc.Length < 1f)
+				var wc = WingedEdge.GetWingedEdges(pbMeshMain, new[] {firstFace.Key});
+				
+				foreach (var we in wc.FindAll(f => f.opposite == null))
 				{
-					pbMeshMain.TranslateVertices(new [] {mc.Edge.a}, offset / 1.5f);
-					pbMeshMain.TranslateVertices(new [] {mc.Edge.b}, -offset / 1.5f);
+					edgeDatas.Add(EdgeData.CalculateForEdge(pbMeshMain, we.edge.local));
+				}
+
+				if (edgeDatas.Count > 0)
+				{
+					var lastDistance = Mathf.Infinity;
+					foreach (var data in edgeDatas)
+					{
+						var d = Vector3.Distance(data.Center, edgeData.Center);
+						var s = SignedAngleBetween(data.Dir, edgeData.Dir, edgeData.Center - faceCenter);
+						if (d < lastDistance && Mathf.Abs(Mathf.Abs(s)-90f) > 10f)
+						{
+							lastDistance = d;
+							edgeToSnap = data;
+							angleSelected = s;
+						}
+					}
+
+				}
+				else
+				{
+					Debug.Log("Dot problem on :" + pbMeshMinor);
 				}
 			}
+			//Adjust size in case of low width
+			if (edgeToSnap.Length < 1f)
+			{
+				var min = 1f - edgeToSnap.Length;
+				pbMeshMain.TranslateVertices(new [] {edgeToSnap.Edge.a}, edgeToSnap.Dir * min / 2);
+				pbMeshMain.TranslateVertices(new [] {edgeToSnap.Edge.b}, -edgeToSnap.Dir * min / 2);
+			}
 			
-			
-			//Snap vertexes
-			var mainVertA = pbMeshMain.VerticesInWorldSpace()[mc.Edge.b];
-			var mainVertB = pbMeshMain.VerticesInWorldSpace()[mc.Edge.a];
+			Debug.Log($"Edge to snap [{pbMeshMinor.name},{edgeData.Center}]:{edgeToSnap.Center} | DotSelected:{angleSelected}| Face:{faceCenter}");
+		
+			SnapVerticles(pbMeshMain, edgeToSnap, pbMeshMinor, edgeData);
+			//Combine(pbMeshMain, pbMeshMinor);
+		}
+
+		private void Combine(ProBuilderMesh pbMeshMain, ProBuilderMesh pbMeshMinor)
+		{
+			//Combine to single mesh
+			var mesh = CombineMeshes.Combine(new[] {pbMeshMain, pbMeshMinor}, pbMeshMain);
+			var first = mesh[0];
+			first.WeldVertices(mesh[0].faces.SelectMany(s => s.indexes), 0.2f);
+			first.ToMesh(MeshTopology.Quads);
+			first.Refresh();
+
+			GameObject.DestroyImmediate(MinorRoad.Builder.GameObject);
+		}
+
+		private void SnapVerticles(ProBuilderMesh pbMeshMain, EdgeData edgeToSnap, ProBuilderMesh pbMeshMinor, EdgeData edgeData)
+		{
+			var mainVertA = pbMeshMain.VerticesInWorldSpace()[edgeToSnap.Edge.b];
+			var mainVertB = pbMeshMain.VerticesInWorldSpace()[edgeToSnap.Edge.a];
 			var vert = pbMeshMinor.GetVertices();
 			vert[edgeData.Edge.a].position = mainVertA;
 			vert[edgeData.Edge.b].position = mainVertB;
 			pbMeshMinor.SetVertices(vert);
 			pbMeshMinor.ToMesh();
-
-			//Combine to single mesh
-			var mesh = CombineMeshes.Combine(new[] { pbMeshMain, pbMeshMinor }, pbMeshMain);
-			var first = mesh[0];
-			first.WeldVertices(mesh[0].faces.SelectMany(s => s.indexes), 0.2f);
-			first.ToMesh(MeshTopology.Quads);
-			first.Refresh();
-			
-			GameObject.DestroyImmediate(MinorRoad.Builder.GameObject);
+			pbMeshMinor.Refresh();
 		}
 
+		float SignedAngleBetween(Vector3 a, Vector3 b, Vector3 n){
+			// angle in [0,180]
+			float angle = Vector3.Angle(a,b);
+			float sign = Mathf.Sign(Vector3.Dot(n,Vector3.Cross(a,b)));
+
+			// angle in [-179,180]
+			float signed_angle = angle * sign;
+
+			// angle in [0,360] (not used but included here for completeness)
+			//float angle360 =  (signed_angle + 180) % 360;
+
+			return signed_angle;
+		}
 		
 		private EdgeData ReturnClosestEdgeOnMesh(ProBuilderMesh pbMesh, Vector3 point)
 		{
@@ -160,37 +208,52 @@ namespace Tomi
 			return wingedEdges;
 		}
 
-		private void RemoveOverlappedFaces()
+		private int RemoveToTightFaces(ProBuilderMesh pbMesh, Vector2 startPoint, float distance = 0.5f)
 		{
-			var pbMinor = MinorRoad.Builder.ProBuilderMesh;
-			var p2d = new Vector2(Point.x, Point.z);
-			var facesToCheck = FindClosestFaceToPoint(pbMinor, Point);
-			if (facesToCheck == null) return;
+			if (!FindClosestFacesToPoint(pbMesh, Point, out var facesToCheck))
+				return -1;
 			
+			var count = 0;
+			var prevFace = facesToCheck[0].Key;
 			foreach (var pair in facesToCheck)
 			{
+				var nextFace = pair.Key;
+				if (nextFace == prevFace) continue;
 				//Use 2d vector, Y pos is different
 				var v2d = new Vector2(pair.Value.x, pair.Value.z);
-				if (Vector2.Distance(v2d, p2d) < 1f)
+				if (Vector2.Distance(v2d, startPoint) < distance)
 				{
-					pbMinor.DeleteFace(pair.Key);
-					pbMinor.ToMesh();
+					pbMesh.DeleteFace(prevFace);
+					pbMesh.ToMesh();
+					pbMesh.Refresh();
+					count++;
 					Debug.LogWarning($"Removed face:{pair.Key}");
 				}
+
+				//set next point
+				startPoint = v2d;
+				prevFace = nextFace;
 			}
+			
+			pbMesh.WeldVertices(pbMesh.faces.SelectMany(s => s.indexes), distance);
+			pbMesh.ToMesh(MeshTopology.Quads);
+			pbMesh.Refresh();
+			return count;
 		}
 		private EdgeData AdjustMinorRoadLength()
 		{
 			var pbMesh = MinorRoad.Builder.ProBuilderMesh;
 			var edgeData = GetClosesEdge(MinorRoad, Point);
-			if (MainRoad.Name.Equals("616321508"))
+			
+			if (FindClosestFacesToPoint(pbMesh, Point,out var faceData))
 			{
-				Debug.Log(MinorRoadDir);
-				pbMesh.TranslateVertices(new[] { edgeData.Edge }, -MinorRoadDir * (edgeData.Length / 2));
+				pbMesh.TranslateVertices(new[] {faceData[0].Key}, MinorRoadDir * (edgeData.Length / 2));
+				var w = WingedEdge.SortEdgesByAdjacency(faceData[0].Key);
+				pbMesh.TranslateVertices(new[] {w.Last()}, MinorRoadDir * -(edgeData.Length / 2));
+				pbMesh.ToMesh(MeshTopology.Quads);
+				pbMesh.Refresh();
 			}
-			pbMesh.TranslateVertices(new[] { edgeData.Edge }, MinorRoadDir * (edgeData.Length / 2));
-			pbMesh.ToMesh(MeshTopology.Quads);
-			pbMesh.Refresh();
+			
 			MinorRoad.Invalidate();
 			//Return new position after translation
 			return GetClosesEdge(MinorRoad, Point);
@@ -222,12 +285,13 @@ namespace Tomi
 			throw new Exception($"No faces in mesh {mesh}");
 		}
 
-		private List<KeyValuePair<Face, Vector3>> FindClosestFaceToPoint(ProBuilderMesh mesh, Vector3 point)
+		private bool FindClosestFacesToPoint(ProBuilderMesh mesh, Vector3 point, out List<KeyValuePair<Face, Vector3>> orderedFaces)
 		{
+			orderedFaces = new List<KeyValuePair<Face, Vector3>>();
 			var orderedList = new Dictionary<Face, Vector3>();
 			//Don't use on to small objects
-			if (mesh.faceCount <= 2)
-				return null;	
+			if (mesh.faceCount < 2)
+				return false;	
 			
 			foreach (var face in mesh.faces)
 			{
@@ -237,13 +301,11 @@ namespace Tomi
 				orderedList.Add(face, pos);
 			}
 
-			if (orderedList.Count > 0)
-			{
-				var orderedEnumerable = orderedList.OrderBy(o => Vector3.Distance(o.Value, point));
-				return orderedEnumerable.ToList();
-			}
-
-			return null;
+			if (orderedList.Count == 0)
+				return false;
+			
+			orderedFaces.AddRange(orderedList.OrderBy(o => Vector3.Distance(o.Value, point)));
+			return true;
 		}
 
 		public Vector3 CalculateRoadDirection(SplineHandler road, int index)
