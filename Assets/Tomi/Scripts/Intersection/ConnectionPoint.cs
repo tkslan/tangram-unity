@@ -8,7 +8,7 @@ using Math = UnityEngine.ProBuilder.Math;
 
 namespace Tomi
 {
-	public class ConnectionPoint
+	public partial class ConnectionPoint
 	{
 		public Vector3 Point { get; }
 		public int MainRoadPointIndex { get; }
@@ -26,7 +26,7 @@ namespace Tomi
 		private EdgeData _bevelPointEdgeData;
 		public ConnectionPoint(Vector3 point, int mainIndex, int minorIndex, SplineHandler mainRoad, SplineHandler minorRoad)
 		{
-			Point = point;
+			Point = new Vector3(point.x, 0, point.z);
 			MainRoadPointIndex = mainIndex;
 			MinorRoadPointIndex = minorIndex;
 			MainRoad = mainRoad;
@@ -48,18 +48,19 @@ namespace Tomi
 			if (_wingedEdges == null)
 				throw new NotSupportedException("Error on bevel");
 		}
-		
+
 		public void UpdateRoadConnectionsMesh()
 		{
 			var pbMeshMain = MainRoad.Builder.ProBuilderMesh;
 			var pbMeshMinor = MinorRoad.Builder.ProBuilderMesh;
-
+			
 			var edgeData = AdjustMinorRoadLength();
 
 			var edgeToSnap = ReturnClosestEdgeOnMesh(pbMeshMain, edgeData.Center);
 			
 			var angleSelected = 0f;
 			var faceCenter = Vector3.zero;
+			
 			if (FindClosestFacesToPoint(pbMeshMain, edgeData.Center, out var orderedFaces))
 			{
 				var edgeDatas = new List<EdgeData>();
@@ -75,25 +76,16 @@ namespace Tomi
 
 				if (edgeDatas.Count > 0)
 				{
-					var lastDistance = Mathf.Infinity;
-					foreach (var data in edgeDatas)
-					{
-						var d = Vector3.Distance(data.Center, edgeData.Center);
-						var s = SignedAngleBetween(data.Dir, edgeData.Dir, edgeData.Center - faceCenter);
-						if (d < lastDistance && Mathf.Abs(Mathf.Abs(s)-90f) > 10f)
-						{
-							lastDistance = d;
-							edgeToSnap = data;
-							angleSelected = s;
-						}
-					}
-
+					var proxy = new EdgeProximitySelector(edgeDatas);
+					edgeToSnap = proxy.CalculateProximity(edgeData);
 				}
 				else
 				{
 					Debug.Log("Dot problem on :" + pbMeshMinor);
 				}
 			}
+			
+			
 			//Adjust size in case of low width
 			if (edgeToSnap.Length < 1f)
 			{
@@ -194,9 +186,16 @@ namespace Tomi
 			
 			var newFace = Bevel.BevelEdges(pbMesh, new[] { edgeData.Edge }, edgeData.Length / 2);
 			
+			//Can't create new bevel, find closest face and return edges
 			if (newFace == null)
 			{
-				Debug.LogError(edgeData.Edge);
+				if (FindClosestFacesToPoint(pbMesh, Point, out var faces))
+				{
+					wingedEdges = WingedEdge.GetWingedEdges(pbMesh, new[] {faces.FirstOrDefault().Key});
+				}
+				else
+					Debug.LogError(edgeData.Edge + $" Center: {edgeData.Center} Minor: {MinorRoad.Name}");
+				
 				return wingedEdges;
 			}
 			
@@ -248,13 +247,17 @@ namespace Tomi
 			if (FindClosestFacesToPoint(pbMesh, Point,out var faceData))
 			{
 				pbMesh.TranslateVertices(new[] {faceData[0].Key}, MinorRoadDir * (edgeData.Length / 2));
-				var w = WingedEdge.SortEdgesByAdjacency(faceData[0].Key);
-				pbMesh.TranslateVertices(new[] {w.Last()}, MinorRoadDir * -(edgeData.Length / 2));
+				
+				//pbMesh.TranslateVertices(new[] {w.Last()}, MinorRoadDir * -(edgeData.Length / 2));
 				pbMesh.ToMesh(MeshTopology.Quads);
 				pbMesh.Refresh();
 			}
 			
 			MinorRoad.Invalidate();
+			if (MinorRoad.Name.Equals("545317729"))
+			{
+				Debug.Log($"Problem: {Point} {edgeData.Center}");
+			}
 			//Return new position after translation
 			return GetClosesEdge(MinorRoad, Point);
 		}
