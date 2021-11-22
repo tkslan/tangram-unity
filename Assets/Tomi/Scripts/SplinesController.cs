@@ -49,14 +49,12 @@ namespace Tomi
 				
 				if (point.MinorRoad.IsValid && point.MainRoad.IsValid)
 				{
-					point.BevelMainRoadConnection();
 					point.UpdateRoadConnectionsMesh();
 				}
 			}
 		}
 
 		private List<GameObject> processed = new List<GameObject>();
-		
 		
 		private void CombineMeshes(Dictionary<SplineHandler,List<Intersection>> intersections)
 		{

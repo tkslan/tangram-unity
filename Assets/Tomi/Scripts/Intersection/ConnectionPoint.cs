@@ -8,7 +8,7 @@ using Math = UnityEngine.ProBuilder.Math;
 
 namespace Tomi
 {
-	public partial class ConnectionPoint
+	public class ConnectionPoint
 	{
 		public Vector3 Point { get; }
 		public int MainRoadPointIndex { get; }
@@ -39,26 +39,31 @@ namespace Tomi
 		{
 			Point = point;
 		}
-
-		public void BevelMainRoadConnection()
+		
+		public void CalculateEdgeData(SplineHandler road)
 		{
-			if (_wingedEdges == null || _wingedEdges.Count == 0)
-				_wingedEdges = BevelMainRoadPoint();
+			if (road.Edges.Count != 0)
+				return;
 			
-			if (_wingedEdges == null)
-				throw new NotSupportedException("Error on bevel");
+			var edges = CalculateRoadEdgeData(road);
+			road.FillEdgeData(edges);
+			Debug.Assert(edges.Count(c=>c.Internal) == road.Points.Count);
 		}
 
 		public void UpdateRoadConnectionsMesh()
 		{
 			var pbMeshMain = MainRoad.Builder.ProBuilderMesh;
 			var pbMeshMinor = MinorRoad.Builder.ProBuilderMesh;
-			
+			CalculateEdgeData(MainRoad);
+			CalculateEdgeData(MinorRoad);
+			BevelMainRoadPoint();
+	
 			var edgeData = AdjustMinorRoadLength();
 
 			var edgeToSnap = ReturnClosestEdgeOnMesh(pbMeshMain, edgeData.Center);
 			
 			var angleSelected = 0f;
+			
 			var faceCenter = Vector3.zero;
 			
 			if (FindClosestFacesToPoint(pbMeshMain, edgeData.Center, out var orderedFaces))
@@ -66,14 +71,22 @@ namespace Tomi
 				var edgeDatas = new List<EdgeData>();
 				var firstFace = orderedFaces.FirstOrDefault();
 				faceCenter = firstFace.Value;
-				
-				var wc = WingedEdge.GetWingedEdges(pbMeshMain, new[] {firstFace.Key});
+				var face = firstFace.Key;
+				/*
+				var innerEdges = MainRoad.Edges.Where(w=>w.Internal).Select(s=>s.Edge);
+				var goodEdge = face.edges.Except(innerEdges);
+				foreach (var we in goodEdge)
+				{
+					edgeDatas.Add(EdgeData.CalculateForEdge(pbMeshMain, we));
+				}
+				*/
+				var wc = WingedEdge.GetWingedEdges(pbMeshMain, new[] {face});
 				
 				foreach (var we in wc.FindAll(f => f.opposite == null))
 				{
 					edgeDatas.Add(EdgeData.CalculateForEdge(pbMeshMain, we.edge.local));
 				}
-
+				
 				if (edgeDatas.Count > 0)
 				{
 					var proxy = new EdgeProximitySelector(edgeDatas);
@@ -84,7 +97,6 @@ namespace Tomi
 					Debug.Log("Dot problem on :" + pbMeshMinor);
 				}
 			}
-			
 			
 			//Adjust size in case of low width
 			if (edgeToSnap.Length < 1f)
@@ -158,7 +170,7 @@ namespace Tomi
 			}
 		}
 
-		private EdgeData GetClosesEdge(SplineHandler splineHandler, Vector3 p)
+		private EdgeData GetClosesEdge(SplineHandler splineHandler, Vector2 p)
 		{
 			var pbMesh = splineHandler.Builder.ProBuilderMesh;
 			var closes = FindClosestEdgeToPoint(pbMesh, p);
@@ -176,8 +188,9 @@ namespace Tomi
 		{
 			var wingedEdges = new List<WingedEdge>();
 			var pbMesh = MainRoad.Builder.ProBuilderMesh;
+
+			var edgeData = GetClosesEdge(MainRoad, Point.ToVector2());
 			
-			var edgeData = GetClosesEdge(MainRoad, Point);
 			if (pbMesh == null)
 			{
 				Debug.LogError($"Not pbMesh created for [{MainRoad.Name}]");
@@ -185,20 +198,26 @@ namespace Tomi
 			}
 			
 			var newFace = Bevel.BevelEdges(pbMesh, new[] { edgeData.Edge }, edgeData.Length / 2);
-			
+		
 			//Can't create new bevel, find closest face and return edges
 			if (newFace == null)
 			{
-				if (FindClosestFacesToPoint(pbMesh, Point, out var faces))
-				{
-					wingedEdges = WingedEdge.GetWingedEdges(pbMesh, new[] {faces.FirstOrDefault().Key});
-				}
-				else
-					Debug.LogError(edgeData.Edge + $" Center: {edgeData.Center} Minor: {MinorRoad.Name}");
-				
-				return wingedEdges;
+				throw new Exception("Cant create bevel here");
 			}
-			
+
+			var internalCount = 0;
+			foreach (var a in newFace[0].edges)
+			{
+				var data = new EdgeData(pbMesh, a);
+				if (Vector2.Dot(data.Dir, edgeData.Dir) > 0.9f)
+				{
+					data.Internal = true;
+					internalCount++;
+				}
+
+				MainRoad.Edges.Add(data);
+			}
+			Debug.Assert(internalCount == 2);
 			Debug.Log("Bevel done: "+ edgeData.Edge);
 			wingedEdges = WingedEdge.GetWingedEdges(pbMesh, newFace);
 			pbMesh.ToMesh();
@@ -239,6 +258,26 @@ namespace Tomi
 			pbMesh.Refresh();
 			return count;
 		}
+
+		private List<EdgeData> CalculateRoadEdgeData(SplineHandler roadHandler)
+		{
+			var pbMesh = roadHandler.Builder.ProBuilderMesh;
+			var edgeData = new List<EdgeData>();
+			
+			for (var index = 0; index < pbMesh.faces.Count; index++)
+			{
+				for (var i = 0; i < pbMesh.faces[index].edges.Count; i++)
+				{
+					var faceEdge = pbMesh.faces[index].edges[i];
+					var edge = new EdgeData(pbMesh, faceEdge);
+					edge.CheckIsInternal(roadHandler.Points);
+					edgeData.Add(edge);
+				}
+			}
+			
+			return edgeData;
+		}
+
 		private EdgeData AdjustMinorRoadLength()
 		{
 			var pbMesh = MinorRoad.Builder.ProBuilderMesh;
@@ -262,7 +301,7 @@ namespace Tomi
 			return GetClosesEdge(MinorRoad, Point);
 		}
 		
-		private KeyValuePair<Edge, Vector3> FindClosestEdgeToPoint(ProBuilderMesh mesh, Vector3 point)
+		private KeyValuePair<Edge, Vector2> FindClosestEdgeToPoint(ProBuilderMesh mesh, Vector2 point)
 		{
 			var orderedList = new Dictionary<Edge, float>();
 
@@ -270,8 +309,8 @@ namespace Tomi
 			{
 				foreach (var edge in face.edges)
 				{
-					var edgeCenter = Math.Average(mesh.positions, new[] { edge.a, edge.b });
-					var dist = Vector3.Distance(point, edgeCenter);
+					var edgeCenter = Math.Average(mesh.positions, new[] { edge.a, edge.b }).ToVector2();
+					var dist = Vector2.Distance(point, edgeCenter);
 					orderedList.Add(edge, dist);
 				}
 			}
@@ -282,7 +321,7 @@ namespace Tomi
 				var first = orderedEnumerable[0];
 
 				var pos = Math.Average(mesh.positions, new[] { first.Key.a, first.Key.b });
-				return new KeyValuePair<Edge, Vector3>(first.Key,pos);
+				return new KeyValuePair<Edge, Vector2>(first.Key,pos.ToVector2());
 			}
 
 			throw new Exception($"No faces in mesh {mesh}");
@@ -322,6 +361,14 @@ namespace Tomi
 				dir = road.Points[1] - road.Points[0];
 			
 			return dir.normalized;
+		}
+	}
+
+	public static class Vector3Extension
+	{
+		public static Vector2 ToVector2(this Vector3 vector3)
+		{
+			return new Vector2(vector3.x, vector3.z);
 		}
 	}
 }

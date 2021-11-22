@@ -11,6 +11,7 @@ namespace Tomi
         public string Name { get; private set; }
         public bool IsValid => Points is not null && Points.Count >= 2;
         public List<Vector3> Points { get; }
+        public List<EdgeData> Edges { get; private set; }
         public SplineMeshBuilder Builder { get; }
         public PolylineOptions PolylineOptions => _polylineOptions;
         public Matrix4x4 Matrix => _transformMatrix;
@@ -24,9 +25,13 @@ namespace Tomi
         {
             Points.Clear();
         }
+        public void FillEdgeData(List<EdgeData> edgeDatas)
+        {
+            Edges.AddRange(edgeDatas);
+        }
         public SplineHandler(List<Vector2> points, string featureName, Matrix4x4 matrix, PolylineOptions polylineOptions)
         {
-            
+            Edges = new List<EdgeData>();
             _transformMatrix = matrix;
             _polylineOptions = polylineOptions;
             Points = TransformPoints(points, _transformMatrix);

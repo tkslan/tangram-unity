@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 using UnityEngine.ProBuilder;
 
 namespace Tomi
@@ -6,51 +8,45 @@ namespace Tomi
 		public struct EdgeData
 		{
 			public Edge Edge;
-			public Vector3 Center;
-			public Vector3 Dir;
-			public Vector3 PosA;
-			public Vector3 PosBWorld;
-			public Vector3 PosAWorld;
-			public Vector3 PosB;
+			public Vector2 Center;
+			public Vector2 Dir;
+			public Vector2 PosA;
+			public Vector2 PosB;
 			public float Length;
-			
+			public bool Internal;
+
+			public EdgeData(ProBuilderMesh pbMesh, Edge edge)
+			{
+				Edge = edge;
+				PosA = pbMesh.positions[edge.a].ToVector2();
+				PosB = pbMesh.positions[edge.b].ToVector2();
+				Center = Math.Average(pbMesh.positions, new[] {edge.a, edge.b}).ToVector2();
+				Length = (PosA - PosB).magnitude;
+				Dir = (PosA - PosB).normalized;
+				Internal = false;
+			}
 			public static EdgeData CalculateForEdge(ProBuilderMesh pbMesh, Edge edge)
 			{
-				var a = pbMesh.positions[edge.a];
-				var b = pbMesh.positions[edge.b];
-				var wa = GetWorldPosition(pbMesh, edge.a);
-				var wb = GetWorldPosition(pbMesh, edge.b);
-				return new EdgeData
-				{
-					Edge = edge,
-					PosA = a,
-					PosB= b,
-					Center = Math.Average(pbMesh.positions, new[] { edge.a, edge.b }),
-					Length = (a - b).magnitude,
-					Dir = (a - b).normalized,
-					PosAWorld = wa,
-					PosBWorld = wb,
-				};
+				return new EdgeData(pbMesh, edge);
 			}
-
-			public Vector3 GetCloserEdgePosition(Vector3 pos)
+			public void CheckIsInternal(List<Vector3> points)
 			{
-				var aDist = Vector3.Distance(PosA, pos);
-				var bDist = Vector3.Distance(PosB, pos);
+				var center = Center;
+				var any = points.Any(a => Vector2.Distance(a.ToVector2(), center) < 0.01f);
+				Internal = any;
+			}
+			public Vector2 GetCloserEdgePosition(Vector2 pos)
+			{
+				var aDist = Vector2.Distance(PosA, pos);
+				var bDist = Vector2.Distance(PosB, pos);
 				return aDist < bDist ? PosA : PosB;
 			}
-			public Vector3 GetCloserEdgePositionWorld(Vector3 pos)
+			private static Vector2 GetWorldPosition(ProBuilderMesh mesh, int index)
 			{
-				var aDist = Vector3.Distance(PosAWorld, pos);
-				var bDist = Vector3.Distance(PosBWorld, pos);
-				return aDist < bDist ? PosAWorld : PosBWorld;
-			}
-			private static Vector3 GetWorldPosition(ProBuilderMesh mesh, int index)
-			{
-				return ToWorldPos(mesh, mesh.positions[index]);
+				return ToWorldPos(mesh, new Vector2(mesh.positions[index].x,mesh.positions[index].z));
 			}
 
-			public static Vector3 ToWorldPos(ProBuilderMesh mesh, Vector3 pos)
+			public static Vector2 ToWorldPos(ProBuilderMesh mesh, Vector2 pos)
 			{
 				var position = pos;
 
