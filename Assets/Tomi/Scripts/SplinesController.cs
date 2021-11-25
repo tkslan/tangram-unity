@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Tomi.Intersection;
 using Tomi.Scripts.Intersection;
 using UnityEngine;
 using UnityEngine.ProBuilder;
@@ -41,7 +42,7 @@ namespace Tomi
 			}
 		}
 
-		private void ConnectMainRoadIntersections(KeyValuePair<SplineHandler, List<Intersection>> road)
+		private void ConnectMainRoadIntersections(KeyValuePair<SplineHandler, List<IntersectionData>> road)
 		{
 			foreach (var intersection in road.Value)
 			{
@@ -56,7 +57,7 @@ namespace Tomi
 
 		private List<GameObject> processed = new List<GameObject>();
 		
-		private void CombineMeshes(Dictionary<SplineHandler,List<Intersection>> intersections)
+		private void CombineMeshes(Dictionary<SplineHandler,List<IntersectionData>> intersections)
 		{
 			var intersectionsAll = intersections.SelectMany(s => s.Value).ToList();
 			for (int i = 0; i < intersectionsAll.Count; i++)
@@ -65,7 +66,7 @@ namespace Tomi
 
 				if (intersection.CombinedMesh != null)
 				{
-					Debug.Log("Intersection combined : "+ intersection.ConnectionPoint.MainRoadName);
+					Debug.Log("Intersection combined : "+ intersection.ConnectionPoint.MainRoad.Name);
 					continue;
 				}
 
@@ -92,9 +93,9 @@ namespace Tomi
 				}
 			}
 		}
-		private Dictionary<SplineHandler, List<Intersection>> FindConnectedSplines(List<SplineHandler> splines)
+		private Dictionary<SplineHandler, List<IntersectionData>> FindConnectedSplines(List<SplineHandler> splines)
 		{
-			var connected = new Dictionary<SplineHandler, List<Intersection>>();
+			var connected = new Dictionary<SplineHandler, List<IntersectionData>>();
 			
 			foreach (var mainRoad in splines)
 			{
@@ -102,12 +103,12 @@ namespace Tomi
 				{
 					if (mainRoad != minorRoad && mainRoad.IsConnectedWith(minorRoad, out var point))
 					{
-						var intersection = new Intersection();
+						var intersection = new IntersectionData();
 						if (!connected.ContainsKey(mainRoad))
 						{
 							intersection.ConnectionPoint = point;
 							intersection.AddHandler(minorRoad);
-							connected.Add(mainRoad, new List<Intersection>(){intersection});
+							connected.Add(mainRoad, new List<IntersectionData>(){intersection});
 						}
 						else
 						{
@@ -121,7 +122,7 @@ namespace Tomi
 			return connected;
 		}
 
-		public void SpawnDebugIntersection(Intersection i)
+		public void SpawnDebugIntersection(IntersectionData i)
 		{
 			var mainRoad = i.ConnectionPoint.MainRoad;
 			var point = i.ConnectionPoint.Point;

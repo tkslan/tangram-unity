@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Tomi
+namespace Tomi.Geometry
 {
 	public class EdgeProximitySelector
 	{

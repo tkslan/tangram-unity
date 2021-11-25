@@ -5,10 +5,10 @@ using UnityEditor.iOS;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace Tomi
+namespace Tomi.Intersection
 {
 	[System.Serializable]
-	public struct Intersection
+	public struct IntersectionData
 	{
 		public ConnectionPoint ConnectionPoint;
 		public List<SplineHandler> MinorRoads;

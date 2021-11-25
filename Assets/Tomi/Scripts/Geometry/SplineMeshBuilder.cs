@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using Mapzen.Unity;
@@ -9,7 +8,7 @@ using UnityEngine;
 using UnityEngine.ProBuilder;
 using UnityEngine.ProBuilder.MeshOperations;
 
-namespace Tomi
+namespace Tomi.Geometry
 {
 	public class SplineMeshBuilder
 	{
@@ -19,8 +18,11 @@ namespace Tomi
 		private const string AsphaltGUID = "4c0619faa9f87524989ff9fa25868a75";
 		public GameObject GameObject { get; private set; }
 		public Mesh Mesh { get; private set; }
+		public ProBuilderMesh PbMesh { get; private set; }
 
-		public ProBuilderMesh ProBuilderMesh { get; private set; }
+		public EdgeService EdgeService { get; private set; }
+
+		private ProBuilderMesh _proMesh;
 		private MeshFilter _meshFilter;
 		public SplineMeshBuilder(SplineHandler splineHandler)
 		{
@@ -44,6 +46,7 @@ namespace Tomi
 			Mesh = mesh;
 			_meshFilter.mesh = Mesh;
 		}
+		
 		public void Build(Transform parent)
 		{
 			var pointsData = _splineHandler.Points;
@@ -100,8 +103,16 @@ namespace Tomi
 			var importer = new MeshImporter(GameObject);
 			importer.Import();
 			_meshFilter.sharedMesh = new Mesh();
-			ProBuilderMesh = GameObject.GetComponent<ProBuilderMesh>();
+			_proMesh = GameObject.GetComponent<ProBuilderMesh>();
+			PbMesh = _proMesh;
+			//Generate edge data for mesh
+			EdgeService = new EdgeService(_proMesh, _splineHandler.Points);
 		}
-		
+
+		public void UpdatePbMesh()
+		{
+			_proMesh.ToMesh(MeshTopology.Quads);
+			_proMesh.Refresh();
+		}
 	}
 }

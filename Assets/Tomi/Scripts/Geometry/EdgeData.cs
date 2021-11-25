@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Tomi.Intersection;
 using UnityEngine;
 using UnityEngine.ProBuilder;
 
-namespace Tomi
+namespace Tomi.Geometry
 {
 		public struct EdgeData
 		{
@@ -14,6 +15,7 @@ namespace Tomi
 			public Vector2 PosB;
 			public float Length;
 			public bool Internal;
+			public int InternalIndex;
 
 			public EdgeData(ProBuilderMesh pbMesh, Edge edge)
 			{
@@ -24,6 +26,7 @@ namespace Tomi
 				Length = (PosA - PosB).magnitude;
 				Dir = (PosA - PosB).normalized;
 				Internal = false;
+				InternalIndex = -1;
 			}
 			public static EdgeData CalculateForEdge(ProBuilderMesh pbMesh, Edge edge)
 			{
@@ -31,9 +34,17 @@ namespace Tomi
 			}
 			public void CheckIsInternal(List<Vector3> points)
 			{
+				var margin = 0.01f;
 				var center = Center;
-				var any = points.Any(a => Vector2.Distance(a.ToVector2(), center) < 0.01f);
-				Internal = any;
+				
+				var findIndex = points.FindIndex(f => Vector2.Distance(f.ToVector2(), center) < margin);
+				
+				Internal = findIndex >= 0;
+				
+				if (Internal)
+				{
+					InternalIndex = findIndex;
+				}
 			}
 			public Vector2 GetCloserEdgePosition(Vector2 pos)
 			{
