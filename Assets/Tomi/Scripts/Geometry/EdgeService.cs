@@ -160,7 +160,9 @@ namespace Tomi.Geometry
 					edgeData.Add(edge);
 				}
 			}
-			Debug.Assert(edgeData.Count(c=>c.Internal) == Points.Count);
+
+			var internalPoints = edgeData.Count(c => c.Internal);
+			Debug.Assert(internalPoints == Points.Count);
 			Edges.AddRange(edgeData);
 		}
 		

@@ -34,7 +34,7 @@ namespace Tomi.Geometry
 			}
 			public void CheckIsInternal(List<Vector3> points)
 			{
-				var margin = 0.01f;
+				var margin = 0.02f;
 				var center = Center;
 				
 				var findIndex = points.FindIndex(f => Vector2.Distance(f.ToVector2(), center) < margin);

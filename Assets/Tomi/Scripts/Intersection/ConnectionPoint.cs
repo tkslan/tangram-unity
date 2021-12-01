@@ -37,14 +37,11 @@ namespace Tomi.Intersection
 			
 			mainEdgeService.BevelAtPoint(Point);
 			MainRoad.Builder.UpdatePbMesh();
-			
-			var edgeData = MinorRoad.Builder.AdjustEndPosition(Point);
-			MinorRoad.Builder.UpdatePbMesh();
-			
 			var edgeToSnap = mainEdgeService.ReturnClosestEdgeOnMesh(Point);
 			
+			var edgeData = MinorRoad.Builder.AdjustEndPosition(edgeToSnap);
+			MinorRoad.Builder.UpdatePbMesh();
 			var angleSelected = 0f;
-			
 			var faceCenter = Vector3.zero;
 			
 			/*
@@ -70,7 +67,7 @@ namespace Tomi.Intersection
 			
 			Debug.Log($"Edge to snap [{edgeToSnap},{edgeData.Center}]:{edgeToSnap.Center} | DotSelected:{angleSelected}| Face:{faceCenter}");
 		
-			//SnapVerticles(MainRoad.Builder.PbMesh, edgeToSnap, MinorRoad.Builder.PbMesh, edgeData);
+			SnapVerticles(MainRoad.Builder.PbMesh, edgeToSnap, MinorRoad.Builder.PbMesh, edgeData);
 			//Combine(pbMeshMain, pbMeshMinor);
 		}
 		
