@@ -21,6 +21,7 @@ namespace Tomi.Geometry
 		public ProBuilderMesh PbMesh { get; private set; }
 
 		public EdgeService EdgeService { get; private set; }
+		public FaceService FaceService { get; private set; }
 
 		private ProBuilderMesh _proMesh;
 		private MeshFilter _meshFilter;
@@ -107,8 +108,31 @@ namespace Tomi.Geometry
 			PbMesh = _proMesh;
 			//Generate edge data for mesh
 			EdgeService = new EdgeService(_proMesh, _splineHandler.Points);
+			FaceService = new FaceService(_proMesh, _splineHandler.Points);
 		}
 
+		public EdgeData AdjustEndPosition(Vector2 point, float roadSize = 1f)
+		{
+			if (EdgeService.Edges.Count == 0)
+				throw new Exception("");
+
+			if (!EdgeService.GetClosesEdge(point, out var edgeData))
+				throw new Exception("Cant find proper edge to snap");
+			
+			Debug.Log($"Closes edge to snap: {edgeData.Center}");
+	
+			if (FaceService.FindClosestFacesToPoint( point,out var faceData))
+			{
+				var face = faceData[0];
+				var roadDirection = EdgeService.CalculateDirectionFromEdge(edgeData);
+				PbMesh.TranslateVertices(new[] {edgeData.Edge}, roadDirection * (roadSize / 2));
+				PbMesh.ToMesh(MeshTopology.Quads);
+				PbMesh.Refresh();
+			}
+			
+			return edgeData;
+		}
+		
 		public void UpdatePbMesh()
 		{
 			_proMesh.ToMesh(MeshTopology.Quads);

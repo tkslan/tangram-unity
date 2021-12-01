@@ -15,6 +15,7 @@ namespace Tomi
         public List<Vector3> Points { get; }
         
         public SplineMeshBuilder Builder { get; }
+        
         public PolylineOptions PolylineOptions => _polylineOptions;
         public Matrix4x4 Matrix => _transformMatrix;
         

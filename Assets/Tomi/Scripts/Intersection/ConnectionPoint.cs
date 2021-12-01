@@ -38,27 +38,22 @@ namespace Tomi.Intersection
 			mainEdgeService.BevelAtPoint(Point);
 			MainRoad.Builder.UpdatePbMesh();
 			
+			var edgeData = MinorRoad.Builder.AdjustEndPosition(Point);
+			MinorRoad.Builder.UpdatePbMesh();
 			
-			var edgeData = MinorRoad.Builder.EdgeService.AdjustEndPosition(Point);
-
 			var edgeToSnap = mainEdgeService.ReturnClosestEdgeOnMesh(Point);
 			
 			var angleSelected = 0f;
 			
 			var faceCenter = Vector3.zero;
+			
+			/*
 			if (mainEdgeService.FindClosestFacesToPoint(edgeData.Center, out var orderedFaces))
 			{
 				var firstFace = orderedFaces.FirstOrDefault();
 				faceCenter = firstFace.Value;
 				var face = firstFace.Key;
-				/*
-				var innerEdges = MainRoad.Edges.Where(w=>w.Internal).Select(s=>s.Edge);
-				var goodEdge = face.edges.Except(innerEdges);
-				foreach (var we in goodEdge)
-				{
-					edgeDatas.Add(EdgeData.CalculateForEdge(pbMeshMain, we));
-				}
-				*/
+
 				var faceWingedEdgesData = mainEdgeService.GetFaceWingedEdges(face);
 				if (faceWingedEdgesData.Count > 0)
 				{
@@ -70,12 +65,12 @@ namespace Tomi.Intersection
 					Debug.Log("Dot problem on :" + MainRoad.Name);
 				}
 			}
-
-			mainEdgeService.ResizeEdge(edgeToSnap);
+			*/
+			//mainEdgeService.ResizeEdge(edgeToSnap);
 			
 			Debug.Log($"Edge to snap [{edgeToSnap},{edgeData.Center}]:{edgeToSnap.Center} | DotSelected:{angleSelected}| Face:{faceCenter}");
 		
-			SnapVerticles(MainRoad.Builder.PbMesh, edgeToSnap, MinorRoad.Builder.PbMesh, edgeData);
+			//SnapVerticles(MainRoad.Builder.PbMesh, edgeToSnap, MinorRoad.Builder.PbMesh, edgeData);
 			//Combine(pbMeshMain, pbMeshMinor);
 		}
 		
