@@ -33,7 +33,7 @@ namespace Tomi.Intersection
 		
 		public void UpdateRoadConnectionsMesh()
 		{
-			var mainEdgeService = MainRoad.Builder.EdgeService;
+			var mainEdgeService = MainRoad.Builder.EdgeGeometry;
 			
 			mainEdgeService.BevelAtPoint(Point);
 			MainRoad.Builder.UpdatePbMesh();

@@ -19,8 +19,8 @@ namespace Tomi.Geometry
 		public GameObject GameObject { get; private set; }
 		public Mesh Mesh { get; private set; }
 		public ProBuilderMesh PbMesh { get; private set; }
-		public EdgeService EdgeService { get; private set; }
-		public FaceService FaceService { get; private set; }
+		public EdgeGeometry EdgeGeometry { get; private set; }
+		public FaceGeometry FaceGeometry { get; private set; }
 
 		private ProBuilderMesh _proMesh;
 		private MeshFilter _meshFilter;
@@ -111,18 +111,18 @@ namespace Tomi.Geometry
 
 		public EdgeData AdjustEndPosition(EdgeData toEdge, float roadSize = 1f)
 		{
-			if (EdgeService.Edges.Count == 0)
+			if (EdgeGeometry.Edges.Count == 0)
 				throw new Exception("No edges calculated yet");
 
-			if (!EdgeService.GetClosesEdge(toEdge.Center, out var edgeData))
+			if (!EdgeGeometry.GetClosesEdge(toEdge.Center, out var edgeData))
 				throw new Exception("Cant find proper edge to snap");
 			
 			Debug.Log($"Closes edge to snap: {edgeData.Center}");
 	
-			if (FaceService.FindClosestFacesToPoint(toEdge.Center,out var faceData))
+			if (FaceGeometry.FindClosestFacesToPoint(toEdge.Center,out var faceData))
 			{
 				var face = faceData[0];
-				var roadDirection = EdgeService.CalculateDirectionFromEdge(edgeData);
+				var roadDirection = EdgeGeometry.CalculateDirectionFromEdge(edgeData);
 				PbMesh.TranslateVertices(new[] {edgeData.Edge}, roadDirection * (edgeData.Length / 2));
 				UpdatePbMesh();
 			}
@@ -134,8 +134,8 @@ namespace Tomi.Geometry
 		{
 			_proMesh.ToMesh(MeshTopology.Quads);
 			_proMesh.Refresh();
-			EdgeService = new EdgeService(_proMesh, _splineHandler.Points);
-			FaceService = new FaceService(_proMesh, _splineHandler.Points);
+			EdgeGeometry = new EdgeGeometry(_proMesh, _splineHandler.Points);
+			FaceGeometry = new FaceGeometry(_proMesh, _splineHandler.Points);
 		}
 	}
 }

@@ -8,7 +8,7 @@ namespace Tomi.Geometry
 {
 		public struct EdgeData
 		{
-			public Edge Edge;
+			public UnityEngine.ProBuilder.Edge Edge;
 			public Vector2 Center;
 			public Vector2 Dir;
 			public Vector2 PosA;
@@ -17,7 +17,7 @@ namespace Tomi.Geometry
 			public bool Internal;
 			public int InternalIndex;
 
-			public EdgeData(ProBuilderMesh pbMesh, Edge edge)
+			public EdgeData(ProBuilderMesh pbMesh, UnityEngine.ProBuilder.Edge edge)
 			{
 				Edge = edge;
 				PosA = pbMesh.positions[edge.a].ToVector2();
@@ -28,7 +28,7 @@ namespace Tomi.Geometry
 				Internal = false;
 				InternalIndex = -1;
 			}
-			public static EdgeData CalculateForEdge(ProBuilderMesh pbMesh, Edge edge)
+			public static EdgeData CalculateForEdge(ProBuilderMesh pbMesh, UnityEngine.ProBuilder.Edge edge)
 			{
 				return new EdgeData(pbMesh, edge);
 			}

@@ -9,19 +9,7 @@ using Math = UnityEngine.ProBuilder.Math;
 
 namespace Tomi.Geometry
 {
-	public class GeometryService
-	{
-		protected readonly ProBuilderMesh PbMesh;
-		protected readonly List<Vector3> Points;
-		private readonly Dictionary<Vector2, Face> _beveledPoints;
-
-		public GeometryService(ProBuilderMesh mesh, List<Vector3> points)
-		{
-			PbMesh = mesh;
-			Points = points;
-		}
-	}
-	public partial class EdgeService: GeometryService
+	public class EdgeGeometry: Geometry
 	{
 		public List<EdgeData> Edges { get; }
 
@@ -32,12 +20,12 @@ namespace Tomi.Geometry
 			OnlyInternal
 		}
 		
-		private readonly Dictionary<Vector2, Face> _beveledPoints;
+		private readonly Dictionary<Vector2, UnityEngine.ProBuilder.Face> _beveledPoints;
 		
-		public EdgeService(ProBuilderMesh mesh, List<Vector3> points):base(mesh, points)
+		public EdgeGeometry(ProBuilderMesh mesh, List<Vector3> points):base(mesh, points)
 		{
 			Edges = new List<EdgeData>();
-			_beveledPoints = new Dictionary<Vector2, Face>();
+			_beveledPoints = new Dictionary<Vector2, UnityEngine.ProBuilder.Face>();
 			CalculateRoadEdgeData();
 		}
 
@@ -78,9 +66,9 @@ namespace Tomi.Geometry
 			return hit;
 		}
 
-		private KeyValuePair<Edge, Vector2> FindClosestEdgeToPoint(Vector2 point)
+		private KeyValuePair<UnityEngine.ProBuilder.Edge, Vector2> FindClosestEdgeToPoint(Vector2 point)
 		{
-			var orderedList = new Dictionary<Edge, float>();
+			var orderedList = new Dictionary<UnityEngine.ProBuilder.Edge, float>();
 
 			foreach (var face in PbMesh.faces)
 			{
@@ -98,14 +86,14 @@ namespace Tomi.Geometry
 				var first = orderedEnumerable[0];
 
 				var pos = Math.Average(PbMesh.positions, new[] { first.Key.a, first.Key.b });
-				return new KeyValuePair<Edge, Vector2>(first.Key,pos.ToVector2());
+				return new KeyValuePair<UnityEngine.ProBuilder.Edge, Vector2>(first.Key,pos.ToVector2());
 			}
 
 			throw new Exception($"No faces in mesh {PbMesh}");
 		}
 
 		
-		public Face BevelAtPoint(Vector2 point)
+		public UnityEngine.ProBuilder.Face BevelAtPoint(Vector2 point)
 		{
 			if (_beveledPoints.ContainsKey(point))
 			{
@@ -120,7 +108,7 @@ namespace Tomi.Geometry
 
 			var newFace = Bevel.BevelEdges(PbMesh, new[] {edgeData.Edge}, edgeData.Length / 2);
 
-			//Can't create new bevel, find closest face and return edges
+			//Can't create new bevel
 			if (newFace == null)
 			{
 				Debug.LogError($"Cant bevel here:{PbMesh} - {point}");
@@ -129,6 +117,7 @@ namespace Tomi.Geometry
 
 			//Remove old edge, as it is overlapped by beveled face
 			Edges.Remove(edgeData);
+			
 			var face = newFace[0];
 			
 			foreach (var a in face.edges)
@@ -203,7 +192,7 @@ namespace Tomi.Geometry
 		}
 		
 		//TODO: Refactor to separate FacesService ?
-		public List<EdgeData> GetFaceWingedEdges(Face face)
+		public List<EdgeData> GetFaceWingedEdges(UnityEngine.ProBuilder.Face face)
 		{
 			var wc = WingedEdge.GetWingedEdges(PbMesh, new[] {face});
 			var edgeDatas = new List<EdgeData>();

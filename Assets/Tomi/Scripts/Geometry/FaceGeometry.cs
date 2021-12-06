@@ -6,11 +6,9 @@ using UnityEngine.ProBuilder.MeshOperations;
 
 namespace Tomi.Geometry
 {
-	public class FaceService : GeometryService
+	public class FaceGeometry : Geometry
 	{
-		public FaceService(ProBuilderMesh mesh, List<Vector3> points) : base(mesh, points)
-		{
-		}
+		public FaceGeometry(ProBuilderMesh mesh, List<Vector3> points) : base(mesh, points) { }
 
 		public bool FindClosestFacesToPoint(Vector3 point, out List<KeyValuePair<Face, Vector3>> orderedFaces)
 		{
