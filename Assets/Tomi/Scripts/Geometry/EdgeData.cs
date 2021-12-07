@@ -6,18 +6,18 @@ using UnityEngine.ProBuilder;
 
 namespace Tomi.Geometry
 {
-		public struct EdgeData
-		{
-			public UnityEngine.ProBuilder.Edge Edge;
-			public Vector2 Center;
-			public Vector2 Dir;
-			public Vector2 PosA;
-			public Vector2 PosB;
-			public float Length;
-			public bool Internal;
-			public int InternalIndex;
-
-			public EdgeData(ProBuilderMesh pbMesh, UnityEngine.ProBuilder.Edge edge)
+	public struct EdgeData
+	{
+			public Edge Edge { get; }
+			public Vector2 Center { get; }
+			public Vector2 Dir { get; }
+			public Vector2 PosA { get; }
+			public Vector2 PosB { get; }
+			public float Length { get; }
+			public bool Internal { get; private set; }
+			public int Index { get; private set; }
+			public bool Valid { get; }
+			public EdgeData(ProBuilderMesh pbMesh, Edge edge)
 			{
 				Edge = edge;
 				PosA = pbMesh.positions[edge.a].ToVector2();
@@ -26,9 +26,10 @@ namespace Tomi.Geometry
 				Length = (PosA - PosB).magnitude;
 				Dir = (PosA - PosB).normalized;
 				Internal = false;
-				InternalIndex = -1;
+				Index = -1;
+				Valid = true;
 			}
-			public static EdgeData CalculateForEdge(ProBuilderMesh pbMesh, UnityEngine.ProBuilder.Edge edge)
+			public static EdgeData CalculateForEdge(ProBuilderMesh pbMesh, Edge edge)
 			{
 				return new EdgeData(pbMesh, edge);
 			}
@@ -39,12 +40,12 @@ namespace Tomi.Geometry
 				
 				var findIndex = points.FindIndex(f => Vector2.Distance(f.ToVector2(), center) < margin);
 				
-				Internal = findIndex >= 0;
-				
-				if (Internal)
-				{
-					InternalIndex = findIndex;
-				}
+				//Don't include caps (first and last point) as internal
+				if(findIndex > 0 && findIndex < points.Count - 1)
+					Internal = true;
+				//But only set index to mark them
+				if(findIndex >= 0)
+					Index = findIndex;
 			}
 			public Vector2 GetCloserEdgePosition(Vector2 pos)
 			{

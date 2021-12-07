@@ -21,12 +21,16 @@ namespace Tomi.Geometry
 		public ProBuilderMesh PbMesh { get; private set; }
 		public EdgeGeometry EdgeGeometry { get; private set; }
 		public FaceGeometry FaceGeometry { get; private set; }
-
+		public bool AlteredBefore => _previousModifications.Count > 0;
+		
 		private ProBuilderMesh _proMesh;
 		private MeshFilter _meshFilter;
+		
+		private readonly Dictionary<EdgeData, EdgeData> _previousModifications;
 		public SplineMeshBuilder(SplineHandler splineHandler)
 		{
 			_splineHandler = splineHandler;
+			_previousModifications = new Dictionary<EdgeData, EdgeData>();
 		}
 		
 		private Material LoadRoadMaterial()
@@ -109,24 +113,29 @@ namespace Tomi.Geometry
 			UpdatePbMesh();
 		}
 
+		public bool WasModified(EdgeData toEdge)
+		{
+			var modifiedBefore = _previousModifications.ContainsKey(toEdge);
+			return modifiedBefore;
+		}
+
 		public EdgeData AdjustEndPosition(EdgeData toEdge, float roadSize = 1f)
 		{
+			
 			if (EdgeGeometry.Edges.Count == 0)
 				throw new Exception("No edges calculated yet");
 
 			if (!EdgeGeometry.GetClosesEdge(toEdge.Center, out var edgeData))
 				throw new Exception("Cant find proper edge to snap");
 			
-			Debug.Log($"Closes edge to snap: {edgeData.Center}");
+			Debug.Log($"Closes edge to snap [{PbMesh.name}]: {edgeData.Center} -> {toEdge.Center}");
 	
-			if (FaceGeometry.FindClosestFacesToPoint(toEdge.Center,out var faceData))
-			{
-				var face = faceData[0];
-				var roadDirection = EdgeGeometry.CalculateDirectionFromEdge(edgeData);
-				PbMesh.TranslateVertices(new[] {edgeData.Edge}, roadDirection * (edgeData.Length / 2));
-				UpdatePbMesh();
-			}
-			
+			var dir = EdgeGeometry.CalculateDirectionFromEdge(edgeData);
+			var length = (edgeData.Center - toEdge.Center).magnitude;
+			PbMesh.TranslateVertices(new[] {edgeData.Edge}, dir * Mathf.Abs(length));
+			UpdatePbMesh();
+			EdgeGeometry.GetClosesEdge(toEdge.Center, out edgeData);
+			_previousModifications.Add(toEdge, edgeData);
 			return edgeData;
 		}
 		

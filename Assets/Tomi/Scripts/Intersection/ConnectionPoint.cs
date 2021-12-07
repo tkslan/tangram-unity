@@ -14,7 +14,7 @@ namespace Tomi.Intersection
 		public int MinorRoadPointIndex { get; }
 		public SplineHandler MainRoad { get; }
 		public SplineHandler MinorRoad { get; }
-
+		
 		private List<WingedEdge> _wingedEdges;
 		private EdgeData _bevelPointEdgeData;
 		public ConnectionPoint(Vector3 point, int mainIndex, int minorIndex, SplineHandler mainRoad, SplineHandler minorRoad)
@@ -33,25 +33,27 @@ namespace Tomi.Intersection
 		
 		public void UpdateRoadConnectionsMesh()
 		{
-			var mainEdgeService = MainRoad.Builder.EdgeGeometry;
+			var main = MainRoad.Builder;
+			var minor = MinorRoad.Builder;
+			var edgeToSnap = main.EdgeGeometry.ReturnClosestEdgeOnMesh(Point);
 			
-			mainEdgeService.BevelAtPoint(Point);
-			MainRoad.Builder.UpdatePbMesh();
-			var edgeToSnap = mainEdgeService.ReturnClosestEdgeOnMesh(Point);
+			if (main.EdgeGeometry.BevelAtPoint(Point) != null)
+				MainRoad.Builder.UpdatePbMesh();
 			
 			var edgeData = MinorRoad.Builder.AdjustEndPosition(edgeToSnap);
-			MinorRoad.Builder.UpdatePbMesh();
 			var angleSelected = 0f;
 			var faceCenter = Vector3.zero;
+			SnapVerticles(main.PbMesh, edgeToSnap, minor.PbMesh, edgeData);
+			return;
 			
-			/*
-			if (mainEdgeService.FindClosestFacesToPoint(edgeData.Center, out var orderedFaces))
+			
+			if (main.FaceGeometry.FindClosestFacesToPoint(edgeData.Center, out var orderedFaces))
 			{
 				var firstFace = orderedFaces.FirstOrDefault();
 				faceCenter = firstFace.Value;
 				var face = firstFace.Key;
 
-				var faceWingedEdgesData = mainEdgeService.GetFaceWingedEdges(face);
+				var faceWingedEdgesData = main.EdgeGeometry.GetFaceWingedEdges(face);
 				if (faceWingedEdgesData.Count > 0)
 				{
 					var proxy = new EdgeProximitySelector(faceWingedEdgesData);
@@ -62,12 +64,12 @@ namespace Tomi.Intersection
 					Debug.Log("Dot problem on :" + MainRoad.Name);
 				}
 			}
-			*/
-			//mainEdgeService.ResizeEdge(edgeToSnap);
 			
+			//mainEdgeService.ResizeEdge(edgeToSnap);
+			SnapVerticles(main.PbMesh, edgeToSnap, minor.PbMesh, edgeData);
 			Debug.Log($"Edge to snap [{edgeToSnap},{edgeData.Center}]:{edgeToSnap.Center} | DotSelected:{angleSelected}| Face:{faceCenter}");
 		
-			SnapVerticles(MainRoad.Builder.PbMesh, edgeToSnap, MinorRoad.Builder.PbMesh, edgeData);
+		
 			//Combine(pbMeshMain, pbMeshMinor);
 		}
 		
