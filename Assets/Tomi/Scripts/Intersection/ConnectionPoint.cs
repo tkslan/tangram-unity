@@ -36,10 +36,14 @@ namespace Tomi.Intersection
 			var main = MainRoad.Builder;
 			var minor = MinorRoad.Builder;
 			var edgeToSnap = main.EdgeGeometry.ReturnClosestEdgeOnMesh(Point);
-			
-			if (main.EdgeGeometry.BevelAtPoint(Point) != null)
+
+			var face = main.EdgeGeometry.BevelAtPoint(Point);
+			if (face != null)
+			{
+				//main.FaceGeometry.MergeFacesAt(Point);
 				MainRoad.Builder.UpdatePbMesh();
-			
+			}
+
 			var edgeData = MinorRoad.Builder.AdjustEndPosition(edgeToSnap);
 			var angleSelected = 0f;
 			var faceCenter = Vector3.zero;

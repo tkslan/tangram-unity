@@ -91,7 +91,7 @@ namespace Tomi.Geometry
 
 			throw new Exception($"No faces in mesh {PbMesh}");
 		}
-		
+
 		public Face BevelAtPoint(Vector2 point)
 		{
 			if (_beveledPoints.ContainsKey(point))
@@ -105,6 +105,7 @@ namespace Tomi.Geometry
 				Debug.LogError($"Cant find proper edge to bevel:{PbMesh.name}, {point}");
 			}
 
+			//var newFace = UnityEngine.ProBuilder.MeshOperations.ConnectElements.Connect();
 			var newFace = Bevel.BevelEdges(PbMesh, new[] {edgeData.Edge}, edgeData.Length / 2);
 
 			//Can't create new bevel
@@ -113,23 +114,26 @@ namespace Tomi.Geometry
 				Debug.LogError($"Cant bevel here:{PbMesh} - {point}");
 				return null;
 			}
-
+			
 			//Remove old edge, as it is overlapped by beveled face
 			Edges.Remove(edgeData);
 			
 			var face = newFace[0];
 			
-			foreach (var a in face.edges)
+		
+			/*foreach (var a in face.edges)
 			{
 				var data = new EdgeData(PbMesh, a);
 				var dot = Vector2.Dot(data.Dir, edgeData.Dir);
 				if (Mathf.Abs(dot) > 0.9f)
 				{
-					//data.Internal = true;
+					Points.Add(data.Center);
+					data.CheckIsInternal(Points);
 				}
 				
 				Edges.Add(data);
-			}
+			}*/
+			
 			_beveledPoints.Add(point,face);
 			
 			return face;

@@ -10,10 +10,10 @@ namespace Tomi.Geometry
 	{
 		public FaceGeometry(ProBuilderMesh mesh, List<Vector3> points) : base(mesh, points) { }
 		public override void Refresh() { }
-		public bool FindClosestFacesToPoint(Vector3 point, out List<KeyValuePair<Face, Vector3>> orderedFaces)
+		public bool FindClosestFacesToPoint(Vector2 point, out List<KeyValuePair<Face, Vector2>> orderedFaces)
 		{
-			orderedFaces = new List<KeyValuePair<Face, Vector3>>();
-			var orderedList = new Dictionary<Face, Vector3>();
+			orderedFaces = new List<KeyValuePair<Face, Vector2>>();
+			var orderedList = new Dictionary<Face, Vector2>();
 			//Don't use on to small objects
 			if (PbMesh.faceCount < 2)
 				return false;
@@ -30,7 +30,7 @@ namespace Tomi.Geometry
 			if (orderedList.Count == 0)
 				return false;
 
-			orderedFaces.AddRange(orderedList.OrderBy(o => Vector3.Distance(o.Value, point)));
+			orderedFaces.AddRange(orderedList.OrderBy(o => Vector2.Distance(o.Value, point)));
 			return true;
 		}
 
@@ -45,9 +45,8 @@ namespace Tomi.Geometry
 			{
 				var nextFace = pair.Key;
 				if (nextFace == prevFace) continue;
-				//Use 2d vector, Y pos is different
-				var v2d = new Vector2(pair.Value.x, pair.Value.z);
-				if (Vector2.Distance(v2d, startPoint) < distance)
+			
+				if (Vector2.Distance(pair.Value, startPoint) < distance)
 				{
 					pbMesh.DeleteFace(prevFace);
 					pbMesh.ToMesh();
@@ -57,7 +56,7 @@ namespace Tomi.Geometry
 				}
 
 				//set next point
-				startPoint = v2d;
+				startPoint = pair.Value;
 				prevFace = nextFace;
 			}
 
@@ -66,7 +65,13 @@ namespace Tomi.Geometry
 			pbMesh.Refresh();
 			return count;
 		}
-
-	
+		
+		public void MergeFacesAt(Vector2 point)
+		{
+			FindClosestFacesToPoint(point, out var faces);
+			var first = faces[0];
+			var second = faces[1];
+			var newFace = MergeElements.Merge(PbMesh, new[] {first.Key, second.Key});
+		}
 	}
 }
