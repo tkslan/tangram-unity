@@ -144,12 +144,12 @@ namespace Tomi
             if (withSpline)
                 BuildSpline(parent);
             
-            if (Builder.GameObject != null)
-                Object.DestroyImmediate(Builder.GameObject);
+            if (Builder.MeshObject != null)
+                Object.DestroyImmediate(Builder.MeshObject);
             
             Builder.Build(parent);
             Assert.IsNotNull(Builder.Mesh);
-            Assert.IsNotNull(Builder.GameObject);
+            Assert.IsNotNull(Builder.MeshObject);
         }
 
         private void BuildSpline(Transform parent)

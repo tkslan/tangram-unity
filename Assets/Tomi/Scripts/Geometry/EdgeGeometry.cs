@@ -26,9 +26,9 @@ namespace Tomi.Geometry
 		{
 			Edges = new List<EdgeData>();
 			_beveledPoints = new Dictionary<Vector2, Face>();
-			CalculateRoadEdgeData();
+			Refresh();
 		}
-
+		
 		internal bool GetClosesEdge(Vector2 p, out EdgeData edge, Type type = Type.Any, bool ignoreAtPoint = false)
 		{
 			var all = new List<EdgeData>();
@@ -49,7 +49,7 @@ namespace Tomi.Geometry
 			}
 			
 			var distance = Mathf.Infinity;
-			edge = new EdgeData(PbMesh, Edge.Empty);
+			edge = new EdgeData();
 			var hit = false;
 			for (int i = 0; i < all.Count; i++)
 			{
@@ -91,7 +91,6 @@ namespace Tomi.Geometry
 
 			throw new Exception($"No faces in mesh {PbMesh}");
 		}
-
 		
 		public Face BevelAtPoint(Vector2 point)
 		{
@@ -135,8 +134,7 @@ namespace Tomi.Geometry
 			
 			return face;
 		}
-		
-		private void CalculateRoadEdgeData()
+		public override void Refresh()
 		{
 			var edgeData = new List<EdgeData>();
 			
@@ -150,9 +148,8 @@ namespace Tomi.Geometry
 					edgeData.Add(edge);
 				}
 			}
-
-			var internalPoints = edgeData.Count(c => c.Internal);
-			Debug.Assert(internalPoints == Points.Count - 2); //Caps
+			
+			Edges.Clear();
 			Edges.AddRange(edgeData);
 		}
 		
@@ -173,7 +170,7 @@ namespace Tomi.Geometry
 			if (!GetClosesEdge(firstEdge.Center, out var secondEdge, Type.Internal, true))
 				throw new Exception("Cant set second edge");
 			
-			return firstEdge.Index > secondEdge.Index ?
+			return firstEdge.Index < secondEdge.Index ?
 				(firstEdge.Center - secondEdge.Center).normalized :
 				(secondEdge.Center - firstEdge.Center).normalized;
 		}
@@ -216,5 +213,7 @@ namespace Tomi.Geometry
 			PbMesh.TranslateVertices(new [] {edgeData.Edge.a}, edgeData.Dir * min / 2);
 			PbMesh.TranslateVertices(new [] {edgeData.Edge.b}, -edgeData.Dir * min / 2);
 		}
+
+	
 	}
 }

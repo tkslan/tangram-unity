@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Mapzen.Unity;
 using Mapzen.VectorData;
+using Unity.Plastic.Antlr3.Runtime.Misc;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.ProBuilder;
@@ -16,7 +17,7 @@ namespace Tomi.Geometry
 
 		private const string UvGridMaterialGUID = "7f88baed2a0f94bb3a42f7bc45b5fcf8";
 		private const string AsphaltGUID = "4c0619faa9f87524989ff9fa25868a75";
-		public GameObject GameObject { get; private set; }
+		public GameObject MeshObject { get; private set; }
 		public Mesh Mesh { get; private set; }
 		public ProBuilderMesh PbMesh { get; private set; }
 		public EdgeGeometry EdgeGeometry { get; private set; }
@@ -72,7 +73,7 @@ namespace Tomi.Geometry
 	
 			builder.OnEndLineString();
 
-			GameObject = new GameObject(_splineHandler.Name)
+			MeshObject = new GameObject(_splineHandler.Name)
 			{
 				transform =
 				{
@@ -81,7 +82,7 @@ namespace Tomi.Geometry
 			};
 
 			Mesh = new Mesh();
-			GenerateMesh(GameObject, meshData);
+			GenerateMesh(MeshObject, meshData);
 		}
 
 		private void GenerateMesh(GameObject gameObject, MeshData meshData)
@@ -104,12 +105,13 @@ namespace Tomi.Geometry
 			var meshRendererComponent = gameObject.AddComponent<MeshRenderer>();
 			meshRendererComponent.materials = materials;
 			_meshFilter.mesh = Mesh;
-			var importer = new MeshImporter(GameObject);
+			var importer = new MeshImporter(MeshObject);
 			importer.Import();
 			_meshFilter.sharedMesh = new Mesh();
-			_proMesh = GameObject.GetComponent<ProBuilderMesh>();
+			_proMesh = MeshObject.GetComponent<ProBuilderMesh>();
 			PbMesh = _proMesh;
 			//Generate edge data for mesh
+			InitGeometry();
 			UpdatePbMesh();
 		}
 
@@ -121,7 +123,6 @@ namespace Tomi.Geometry
 
 		public EdgeData AdjustEndPosition(EdgeData toEdge, float roadSize = 1f)
 		{
-			
 			if (EdgeGeometry.Edges.Count == 0)
 				throw new Exception("No edges calculated yet");
 
@@ -138,13 +139,46 @@ namespace Tomi.Geometry
 			_previousModifications.Add(toEdge, edgeData);
 			return edgeData;
 		}
-		
+
+		private void InitGeometry()
+		{
+			EdgeGeometry = new EdgeGeometry(_proMesh, _splineHandler.Points);
+			FaceGeometry = new FaceGeometry(_proMesh, _splineHandler.Points);
+		}
 		public void UpdatePbMesh()
 		{
 			_proMesh.ToMesh(MeshTopology.Quads);
 			_proMesh.Refresh();
-			EdgeGeometry = new EdgeGeometry(_proMesh, _splineHandler.Points);
-			FaceGeometry = new FaceGeometry(_proMesh, _splineHandler.Points);
+			EdgeGeometry.Refresh();
+			FaceGeometry.Refresh();
+			DrawDebug();
+		}
+
+		private List<GameObject> _gameObjects;
+
+		private void DrawDebug()
+		{
+			if (_gameObjects != null)
+			{
+				foreach (var o in _gameObjects)
+				{
+					GameObject.DestroyImmediate(o);
+				}
+			}
+			else
+			{
+				_gameObjects = new ListStack<GameObject>();
+			}
+			
+			foreach (var edgeData in EdgeGeometry.Edges)
+			{
+				var e = GameObject.CreatePrimitive(edgeData.Internal ? PrimitiveType.Cylinder: PrimitiveType.Cube);
+				e.transform.SetParent(PbMesh.transform);
+				e.transform.localScale = Vector3.one / 4;
+				e.transform.position = new Vector3(edgeData.Center.x, 1, edgeData.Center.y);
+				e.name = $"E-{edgeData.Edge.a}-{edgeData.Edge.b}";
+				_gameObjects.Add(e);
+			}
 		}
 	}
 }

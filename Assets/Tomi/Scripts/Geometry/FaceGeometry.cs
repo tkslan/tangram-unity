@@ -9,7 +9,7 @@ namespace Tomi.Geometry
 	public class FaceGeometry : Geometry
 	{
 		public FaceGeometry(ProBuilderMesh mesh, List<Vector3> points) : base(mesh, points) { }
-
+		public override void Refresh() { }
 		public bool FindClosestFacesToPoint(Vector3 point, out List<KeyValuePair<Face, Vector3>> orderedFaces)
 		{
 			orderedFaces = new List<KeyValuePair<Face, Vector3>>();
@@ -66,5 +66,7 @@ namespace Tomi.Geometry
 			pbMesh.Refresh();
 			return count;
 		}
+
+	
 	}
 }

@@ -78,7 +78,7 @@ namespace Tomi
 					var minor = intersection.MinorRoads[j];
 					combine[j].mesh = minor.Builder.Mesh;
 					combine[j].transform = Matrix4x4.zero;
-					minor.Builder.GameObject.SetActive(false);
+					minor.Builder.MeshObject.SetActive(false);
 				}
 
 				combine[j].mesh = intersection.ConnectionPoint.MainRoad.Builder.Mesh;
@@ -90,7 +90,7 @@ namespace Tomi
 				for (j = 0; j < intersection.MinorRoads.Count; j++)
 				{
 					var minor = intersection.MinorRoads[j];
-					Destroy(minor.Builder.GameObject);
+					Destroy(minor.Builder.MeshObject);
 				}
 			}
 		}
@@ -129,7 +129,7 @@ namespace Tomi
 			var point = i.ConnectionPoint.Point;
 			point.y = 0;
 			var p = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			p.transform.SetParent(mainRoad.Builder.GameObject.transform,false);
+			p.transform.SetParent(mainRoad.Builder.MeshObject.transform,false);
 			p.transform.localPosition = point;
 			
 			p.transform.rotation = Quaternion.LookRotation(i.ConnectionPoint.CalculateRoadDirection(i.ConnectionPoint.MinorRoad, i.ConnectionPoint.MinorRoadPointIndex));

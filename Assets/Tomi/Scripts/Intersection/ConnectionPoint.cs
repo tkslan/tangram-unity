@@ -43,11 +43,8 @@ namespace Tomi.Intersection
 			var edgeData = MinorRoad.Builder.AdjustEndPosition(edgeToSnap);
 			var angleSelected = 0f;
 			var faceCenter = Vector3.zero;
-			SnapVerticles(main.PbMesh, edgeToSnap, minor.PbMesh, edgeData);
-			return;
 			
-			
-			if (main.FaceGeometry.FindClosestFacesToPoint(edgeData.Center, out var orderedFaces))
+			/*if (main.FaceGeometry.FindClosestFacesToPoint(edgeData.Center, out var orderedFaces))
 			{
 				var firstFace = orderedFaces.FirstOrDefault();
 				faceCenter = firstFace.Value;
@@ -64,9 +61,10 @@ namespace Tomi.Intersection
 					Debug.Log("Dot problem on :" + MainRoad.Name);
 				}
 			}
+			*/
 			
 			//mainEdgeService.ResizeEdge(edgeToSnap);
-			SnapVerticles(main.PbMesh, edgeToSnap, minor.PbMesh, edgeData);
+			//SnapVerticles(main.PbMesh, edgeToSnap, minor.PbMesh, edgeData);
 			Debug.Log($"Edge to snap [{edgeToSnap},{edgeData.Center}]:{edgeToSnap.Center} | DotSelected:{angleSelected}| Face:{faceCenter}");
 		
 		
@@ -93,7 +91,7 @@ namespace Tomi.Intersection
 			first.ToMesh(MeshTopology.Quads);
 			first.Refresh();
 
-			GameObject.DestroyImmediate(MinorRoad.Builder.GameObject);
+			GameObject.DestroyImmediate(MinorRoad.Builder.MeshObject);
 		}
 		
 		float SignedAngleBetween(Vector3 a, Vector3 b, Vector3 n){
