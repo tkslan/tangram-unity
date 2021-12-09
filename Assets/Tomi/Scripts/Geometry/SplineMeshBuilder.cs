@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Mapzen.Unity;
 using Mapzen.VectorData;
-using Unity.Plastic.Antlr3.Runtime.Misc;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.ProBuilder;
@@ -167,7 +166,7 @@ namespace Tomi.Geometry
 			}
 			else
 			{
-				_gameObjects = new ListStack<GameObject>();
+				_gameObjects = new List<GameObject>();
 			}
 			
 			foreach (var edgeData in EdgeGeometry.Edges)
