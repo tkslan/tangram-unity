@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEditor.iOS;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace Tomi.Intersection
 {
