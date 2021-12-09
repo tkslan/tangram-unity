@@ -35,20 +35,23 @@ namespace Tomi.Intersection
 		{
 			var main = MainRoad.Builder;
 			var minor = MinorRoad.Builder;
-			var edgeToSnap = main.EdgeGeometry.ReturnClosestEdgeOnMesh(Point);
-
-			var face = main.EdgeGeometry.BevelAtPoint(Point);
-			if (face != null)
+			
+			var newFace = main.EdgeGeometry.BevelAtPoint(Point);
+			if (newFace != null)
 			{
 				//main.FaceGeometry.MergeFacesAt(Point);
 				MainRoad.Builder.UpdatePbMesh();
 			}
-
+			var edgeToSnap = main.EdgeGeometry.ReturnClosestEdgeOnMesh(Point);
 			var edgeData = MinorRoad.Builder.AdjustEndPosition(edgeToSnap);
-			var angleSelected = 0f;
-			var faceCenter = Vector3.zero;
 			
-			/*if (main.FaceGeometry.FindClosestFacesToPoint(edgeData.Center, out var orderedFaces))
+			if (!edgeData.Valid)
+				return;
+			
+			var angleSelected = 0f;
+			var faceCenter = Vector2.zero;
+			
+			if (main.FaceGeometry.FindClosestFacesToPoint(edgeData.Center, out var orderedFaces))
 			{
 				var firstFace = orderedFaces.FirstOrDefault();
 				faceCenter = firstFace.Value;
@@ -65,10 +68,10 @@ namespace Tomi.Intersection
 					Debug.Log("Dot problem on :" + MainRoad.Name);
 				}
 			}
-			*/
+			
 			
 			//mainEdgeService.ResizeEdge(edgeToSnap);
-			//SnapVerticles(main.PbMesh, edgeToSnap, minor.PbMesh, edgeData);
+			SnapVerticles(main.PbMesh, edgeToSnap, minor.PbMesh, edgeData);
 			Debug.Log($"Edge to snap [{edgeToSnap},{edgeData.Center}]:{edgeToSnap.Center} | DotSelected:{angleSelected}| Face:{faceCenter}");
 		
 		

@@ -130,7 +130,16 @@ namespace Tomi.Geometry
 			
 			Debug.Log($"Closes edge to snap [{PbMesh.name}]: {edgeData.Center} -> {toEdge.Center}");
 	
-			var dir = EdgeGeometry.CalculateDirectionFromEdge(edgeData);
+			Vector2 dir = Vector2.zero;
+			try
+			{
+				dir = EdgeGeometry.CalculateDirectionFromEdge(edgeData);
+			}
+			catch (Exception e)
+			{
+				Debug.LogError($"Cant calculate for {PbMesh.name}");
+				return new EdgeData();
+			}
 			var length = (edgeData.Center - toEdge.Center).magnitude;
 			PbMesh.TranslateVertices(new[] {edgeData.Edge}, dir * Mathf.Abs(length));
 			UpdatePbMesh();
@@ -150,7 +159,7 @@ namespace Tomi.Geometry
 			_proMesh.Refresh();
 			EdgeGeometry.Refresh();
 			FaceGeometry.Refresh();
-			DrawDebug();
+			//DrawDebug();
 		}
 
 		private List<GameObject> _gameObjects;

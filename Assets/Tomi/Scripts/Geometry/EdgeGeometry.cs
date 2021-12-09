@@ -17,7 +17,8 @@ namespace Tomi.Geometry
 		{
 			Any,
 			External,
-			Internal
+			Internal,
+			Cap
 		}
 		
 		private readonly Dictionary<Vector2, Face> _beveledPoints;
@@ -28,25 +29,20 @@ namespace Tomi.Geometry
 			_beveledPoints = new Dictionary<Vector2, Face>();
 			Refresh();
 		}
-		
+
+		private List<EdgeData> GetEdgesByType(Type type)
+		{
+			return type switch
+			{
+				Type.Internal => Edges.FindAll(f => f.Internal),
+				Type.External => Edges.FindAll(f => !f.Internal),
+				Type.Cap => Edges.FindAll(f => !f.Internal && f.Index >= 0),
+				_ => Edges
+			};
+		}
 		internal bool GetClosesEdge(Vector2 p, out EdgeData edge, Type type = Type.Any, bool ignoreAtPoint = false)
 		{
-			var all = new List<EdgeData>();
-
-			switch (type)
-			{
-				case Type.Internal:
-						all.AddRange(Edges.FindAll(f=> f.Internal));
-					break;
-				
-				case Type.External:
-						all.AddRange(Edges.FindAll(f=> !f.Internal));
-					break;
-				
-				case Type.Any:
-						all.AddRange(Edges);
-					break;
-			}
+			var all = GetEdgesByType(type);
 			
 			var distance = Mathf.Infinity;
 			edge = new EdgeData();
@@ -120,21 +116,18 @@ namespace Tomi.Geometry
 			
 			var face = newFace[0];
 			
-		
-			/*foreach (var a in face.edges)
+			//Update points array with newly created points
+			foreach (var a in face.edges)
 			{
 				var data = new EdgeData(PbMesh, a);
 				var dot = Vector2.Dot(data.Dir, edgeData.Dir);
 				if (Mathf.Abs(dot) > 0.9f)
 				{
 					Points.Add(data.Center);
-					data.CheckIsInternal(Points);
 				}
-				
-				Edges.Add(data);
-			}*/
+			}
 			
-			_beveledPoints.Add(point,face);
+			_beveledPoints.Add(point, face);
 			
 			return face;
 		}
@@ -172,9 +165,10 @@ namespace Tomi.Geometry
 				throw new Exception("Cant set first edge");
 			//Then find first internal edge from cap and calculate direction from center points
 			if (!GetClosesEdge(firstEdge.Center, out var secondEdge, Type.Internal, true))
-				throw new Exception("Cant set second edge");
+				if(!GetClosesEdge(firstEdge.Center, out secondEdge, Type.Cap))
+					throw new Exception("Cant set second edge");
 			
-			return firstEdge.Index < secondEdge.Index ?
+			return firstEdge.Index > secondEdge.Index ?
 				(firstEdge.Center - secondEdge.Center).normalized :
 				(secondEdge.Center - firstEdge.Center).normalized;
 		}

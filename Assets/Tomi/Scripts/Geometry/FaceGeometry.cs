@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Tomi.Intersection;
 using UnityEngine;
 using UnityEngine.ProBuilder;
 using UnityEngine.ProBuilder.MeshOperations;
@@ -24,7 +25,7 @@ namespace Tomi.Geometry
 					.ToList();
 				//calculate average position of face
 				var pos = Math.Average(edgesCenter);
-				orderedList.Add(face, pos);
+				orderedList.Add(face, pos.ToVector2());
 			}
 
 			if (orderedList.Count == 0)

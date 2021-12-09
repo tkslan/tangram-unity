@@ -7,7 +7,7 @@ namespace Tomi.Geometry
 	public abstract class Geometry
 	{
 		protected readonly ProBuilderMesh PbMesh;
-		protected readonly List<Vector3> Points;
+		public readonly List<Vector3> Points;
 		public Geometry(ProBuilderMesh mesh, List<Vector3> points)
 		{
 			PbMesh = mesh;
