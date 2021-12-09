@@ -97,9 +97,10 @@ namespace Tomi.Geometry
 			}
 
 			if (!GetClosesEdge(point, out var edgeData, Type.Internal))
-			{
-				Debug.LogError($"Cant find proper edge to bevel:{PbMesh.name}, {point}");
-			}
+				if(!GetClosesEdge(point, out edgeData, Type.Cap))
+				{
+					Debug.LogError($"Cant find proper edge to bevel:{PbMesh.name}, {point}");
+				}
 
 			//var newFace = UnityEngine.ProBuilder.MeshOperations.ConnectElements.Connect();
 			var newFace = Bevel.BevelEdges(PbMesh, new[] {edgeData.Edge}, edgeData.Length / 2);
@@ -175,7 +176,6 @@ namespace Tomi.Geometry
 		
 		public EdgeData ReturnClosestEdgeOnMesh(Vector2 point)
 		{
-			
 			if(!GetClosesEdge(point, out var edgeData, Type.External))
 				Debug.LogError("Can't return closest edge");
 			Debug.Log($"Closes from {point} {edgeData.Center}");
@@ -189,7 +189,7 @@ namespace Tomi.Geometry
 		}
 		
 		//TODO: Refactor to separate FacesService ?
-		public List<EdgeData> GetFaceWingedEdges(UnityEngine.ProBuilder.Face face)
+		public List<EdgeData> GetFaceWingedEdges(Face face)
 		{
 			var wc = WingedEdge.GetWingedEdges(PbMesh, new[] {face});
 			var edgeDatas = new List<EdgeData>();

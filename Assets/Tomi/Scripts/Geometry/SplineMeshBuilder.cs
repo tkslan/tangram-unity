@@ -140,8 +140,9 @@ namespace Tomi.Geometry
 				Debug.LogError($"Cant calculate for {PbMesh.name}");
 				return new EdgeData();
 			}
-			var length = (edgeData.Center - toEdge.Center).magnitude;
-			PbMesh.TranslateVertices(new[] {edgeData.Edge}, dir * Mathf.Abs(length));
+
+			var length = (edgeData.Center - toEdge.Center).magnitude * roadSize;
+			PbMesh.TranslateVertices(new[] {edgeData.Edge}, dir * length);
 			UpdatePbMesh();
 			EdgeGeometry.GetClosesEdge(toEdge.Center, out edgeData);
 			_previousModifications.Add(toEdge, edgeData);

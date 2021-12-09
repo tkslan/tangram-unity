@@ -7,7 +7,7 @@ namespace Tomi.Geometry
 {
 	public class EdgeProximitySelector
 	{
-		private const float DotThreshold = 0.65f;
+		private const float DotThreshold = 0.50f;
 		struct Proximity
 		{
 			public float Distance;
@@ -31,7 +31,7 @@ namespace Tomi.Geometry
 				var p = new Proximity()
 				{
 					Distance = Vector2.Distance(data.Center, toEdge.Center),
-					Dot = Mathf.Abs(Vector2.Dot(data.Dir, toEdge.Dir)),
+					Dot = Vector2.Dot(data.Dir, toEdge.Dir),
 					Edge = data,
 					Plane = new Plane(data.PosA, data.PosB, toEdge.Center),
 				};
@@ -40,7 +40,7 @@ namespace Tomi.Geometry
 			}
 
 			var niceDot = new List<Proximity>();
-			niceDot.AddRange(proximities.FindAll(f => f.Dot > DotThreshold));
+			niceDot.AddRange(proximities.FindAll(f => Mathf.Abs(f.Dot) > Mathf.Abs(DotThreshold)));
 			if (niceDot.Count == 0)
 			{
 				throw new Exception("No points found");

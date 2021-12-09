@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Tomi.Geometry;
 using UnityEngine;
@@ -15,8 +16,6 @@ namespace Tomi.Intersection
 		public SplineHandler MainRoad { get; }
 		public SplineHandler MinorRoad { get; }
 		
-		private List<WingedEdge> _wingedEdges;
-		private EdgeData _bevelPointEdgeData;
 		public ConnectionPoint(Vector3 point, int mainIndex, int minorIndex, SplineHandler mainRoad, SplineHandler minorRoad)
 		{
 			Point = point.ToVector2();
@@ -30,6 +29,16 @@ namespace Tomi.Intersection
 		{
 			Point = point.ToVector2();
 		}
+		EdgeData GetBestEdgeFromFace(Face mainFace, EdgeData minorEdge)
+		{
+			var faceWingedEdgesData = new List<EdgeData>();
+			foreach (var edge in mainFace.edges)
+			{
+				faceWingedEdgesData.Add(new EdgeData(MainRoad.Builder.PbMesh, edge));
+			}
+			var proxy = new EdgeProximitySelector(faceWingedEdgesData);
+			return proxy.CalculateProximity(minorEdge);
+		}
 		
 		public void UpdateRoadConnectionsMesh()
 		{
@@ -37,44 +46,32 @@ namespace Tomi.Intersection
 			var minor = MinorRoad.Builder;
 			
 			var newFace = main.EdgeGeometry.BevelAtPoint(Point);
+
 			if (newFace != null)
 			{
-				//main.FaceGeometry.MergeFacesAt(Point);
 				MainRoad.Builder.UpdatePbMesh();
 			}
-			var edgeToSnap = main.EdgeGeometry.ReturnClosestEdgeOnMesh(Point);
-			var edgeData = MinorRoad.Builder.AdjustEndPosition(edgeToSnap);
-			
-			if (!edgeData.Valid)
-				return;
-			
-			var angleSelected = 0f;
-			var faceCenter = Vector2.zero;
-			
-			if (main.FaceGeometry.FindClosestFacesToPoint(edgeData.Center, out var orderedFaces))
-			{
-				var firstFace = orderedFaces.FirstOrDefault();
-				faceCenter = firstFace.Value;
-				var face = firstFace.Key;
 
-				var faceWingedEdgesData = main.EdgeGeometry.GetFaceWingedEdges(face);
-				if (faceWingedEdgesData.Count > 0)
+			var edgeToSnap = main.EdgeGeometry.ReturnClosestEdgeOnMesh(Point);
+			var big = MainRoad.PolylineOptions.Width > 500;
+			var edgeData = MinorRoad.Builder.AdjustEndPosition(edgeToSnap, big ? 2 : 1f);
+
+			if (newFace != null)
+			{
+				try
 				{
-					var proxy = new EdgeProximitySelector(faceWingedEdgesData);
-					edgeToSnap = proxy.CalculateProximity(edgeData);
+					edgeToSnap = GetBestEdgeFromFace(newFace, edgeData);
 				}
-				else
+				catch (Exception ex)
 				{
-					Debug.Log("Dot problem on :" + MainRoad.Name);
+					Debug.LogError("No proximity points found");
 				}
 			}
-			
-			
-			//mainEdgeService.ResizeEdge(edgeToSnap);
+
+			main.EdgeGeometry.ResizeEdge(edgeToSnap);
 			SnapVerticles(main.PbMesh, edgeToSnap, minor.PbMesh, edgeData);
-			Debug.Log($"Edge to snap [{edgeToSnap},{edgeData.Center}]:{edgeToSnap.Center} | DotSelected:{angleSelected}| Face:{faceCenter}");
-		
-		
+			Debug.Log($"Edge to snap [{edgeToSnap},{edgeData.Center}]:{edgeToSnap.Center}");
+			
 			//Combine(pbMeshMain, pbMeshMinor);
 		}
 		
@@ -83,8 +80,11 @@ namespace Tomi.Intersection
 			var mainVertA = pbMeshMain.VerticesInWorldSpace()[edgeToSnap.Edge.b];
 			var mainVertB = pbMeshMain.VerticesInWorldSpace()[edgeToSnap.Edge.a];
 			var vert = pbMeshMinor.GetVertices();
-			vert[edgeData.Edge.a].position = mainVertA;
-			vert[edgeData.Edge.b].position = mainVertB;
+			var dot = Vector2.Dot(edgeToSnap.Dir, edgeData.Dir) > 0;
+			
+			vert[edgeData.Edge.a].position = dot ? mainVertB : mainVertA;
+			vert[edgeData.Edge.b].position = dot ? mainVertA : mainVertB;
+
 			pbMeshMinor.SetVertices(vert);
 			pbMeshMinor.ToMesh();
 			pbMeshMinor.Refresh();
@@ -101,21 +101,6 @@ namespace Tomi.Intersection
 			GameObject.DestroyImmediate(MinorRoad.Builder.MeshObject);
 		}
 		
-		float SignedAngleBetween(Vector3 a, Vector3 b, Vector3 n){
-			// angle in [0,180]
-			float angle = Vector3.Angle(a,b);
-			float sign = Mathf.Sign(Vector3.Dot(n,Vector3.Cross(a,b)));
-
-			// angle in [-179,180]
-			float signed_angle = angle * sign;
-
-			// angle in [0,360] (not used but included here for completeness)
-			//float angle360 =  (signed_angle + 180) % 360;
-
-			return signed_angle;
-		}
-		
-	
 		private void Merge(ProBuilderMesh mesh, int[] indexes)
 		{
 			if (indexes.Length > 1)
@@ -128,15 +113,7 @@ namespace Tomi.Intersection
 					mesh.SetSelectedVertices(new int[] { newIndex });
 			}
 		}
-
 	
-		private float GetDot(EdgeData lhs, EdgeData rhs)
-		{
-			var dot = Vector3.Dot(lhs.Dir, rhs.Dir);
-			Debug.Log($"DOT [{MainRoad.Name}]->[{MinorRoad.Name}]={dot}");
-			return dot;
-		}
-
 		public Vector3 CalculateRoadDirection(SplineHandler road, int index)
 		{
 			var dir = road.Points[0] - road.Points[index];
