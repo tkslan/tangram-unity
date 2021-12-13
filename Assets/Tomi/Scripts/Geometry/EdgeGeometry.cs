@@ -126,6 +126,7 @@ namespace Tomi.Geometry
 				{
 					Points.Add(data.Center);
 				}
+				
 			}
 			
 			_beveledPoints.Add(point, face);

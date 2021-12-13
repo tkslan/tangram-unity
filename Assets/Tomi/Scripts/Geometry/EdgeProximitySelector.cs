@@ -7,13 +7,14 @@ namespace Tomi.Geometry
 {
 	public class EdgeProximitySelector
 	{
-		private const float DotThreshold = 0.50f;
+		private const float DotThreshold = 1f;
 		struct Proximity
 		{
 			public float Distance;
 			public float Dot;
 			public Plane Plane;
 			public EdgeData Edge;
+			public float Score;
 		}
 
 		private readonly List<EdgeData> _data;
@@ -31,24 +32,27 @@ namespace Tomi.Geometry
 				var p = new Proximity()
 				{
 					Distance = Vector2.Distance(data.Center, toEdge.Center),
-					Dot = Vector2.Dot(data.Dir, toEdge.Dir),
+					Dot = Mathf.Abs(Vector2.Dot(data.Dir, toEdge.Dir)),
 					Edge = data,
 					Plane = new Plane(data.PosA, data.PosB, toEdge.Center),
 				};
-
+				p.Score = p.Dot + p.Distance;
 				proximities.Add(p);
 			}
 
 			var niceDot = new List<Proximity>();
-			niceDot.AddRange(proximities.FindAll(f => Mathf.Abs(f.Dot) > threshold));
+			var avDist = proximities.Sum(s => s.Distance) / proximities.Count;
+			niceDot.AddRange(proximities.FindAll(w=> w.Distance <= avDist && !w.Edge.Internal));
 			
 			if (niceDot.Count == 0)
 			{
-				return CalculateProximity(toEdge, threshold - 0.05f);
+				if (threshold <= 0.5f)
+					return new EdgeData();
+				
+				return CalculateProximity(toEdge, threshold - 0.1f);
 			}
 
-			var bestEdge = niceDot.OrderBy(o => o.Distance).FirstOrDefault();
-			
+			var bestEdge = niceDot.OrderByDescending(o => o.Dot).FirstOrDefault();
 			return bestEdge.Edge;
 		}
 	}

@@ -67,12 +67,14 @@ namespace Tomi.Geometry
 			return count;
 		}
 		
-		public void MergeFacesAt(Vector2 point)
+		public Face MergeFacesAt(Vector2 point)
 		{
-			FindClosestFacesToPoint(point, out var faces);
+			if (!FindClosestFacesToPoint(point, out var faces))
+				return null;
+			
 			var first = faces[0];
 			var second = faces[1];
-			var newFace = MergeElements.Merge(PbMesh, new[] {first.Key, second.Key});
+			return MergeElements.Merge(PbMesh, new[] {first.Key, second.Key});
 		}
 	}
 }

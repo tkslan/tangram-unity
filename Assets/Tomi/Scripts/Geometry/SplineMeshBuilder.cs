@@ -128,7 +128,15 @@ namespace Tomi.Geometry
 				faceWingedEdgesData.Add(new EdgeData(PbMesh, edge));
 			}
 			var proxy = new EdgeProximitySelector(faceWingedEdgesData);
-			return proxy.CalculateProximity(minorEdge);
+			var point= proxy.CalculateProximity(minorEdge);
+			if (PbMesh.name.Equals("328247473"))
+			{
+				return point;
+			}
+			else
+			{
+				return point;
+			}
 		}
 		
 		public EdgeData AdjustEndPosition(EdgeData toEdge, float roadSize = 1f)

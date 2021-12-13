@@ -29,17 +29,22 @@ namespace Tomi.Intersection
 		{
 			Point = point.ToVector2();
 		}
-		
-		
+
+		private Face PrepareConnection()
+		{
+			var newFace = MainRoad.Builder.EdgeGeometry.BevelAtPoint(Point) ??
+			              MainRoad.Builder.FaceGeometry.MergeFacesAt(Point);
+
+			MainRoad.Builder.UpdatePbMesh();
+			return newFace;
+		}
 		public void Connect()
 		{
 			var main = MainRoad.Builder;
 			var minor = MinorRoad.Builder;
-			
-			var newFace = main.EdgeGeometry.BevelAtPoint(Point);
-			if (newFace != null)
-				MainRoad.Builder.UpdatePbMesh();
 
+			var newFace = PrepareConnection();
+			
 			var edgeToSnap = main.EdgeGeometry.ReturnClosestEdgeOnMesh(Point);
 			var edgeData = minor.AdjustEndPosition(edgeToSnap, 2f);
 			
