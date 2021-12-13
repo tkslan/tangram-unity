@@ -27,7 +27,7 @@ namespace Tomi.Geometry
 				Dir = (PosA - PosB).normalized;
 				Internal = false;
 				Index = -1;
-				Valid = true;
+				Valid = edge.a != edge.b;
 			}
 			public static EdgeData CalculateForEdge(ProBuilderMesh pbMesh, Edge edge)
 			{

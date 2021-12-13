@@ -120,17 +120,27 @@ namespace Tomi.Geometry
 			return modifiedBefore;
 		}
 
+		public EdgeData GetBestEdgeFromFace(Face mainFace, EdgeData minorEdge)
+		{
+			var faceWingedEdgesData = new List<EdgeData>();
+			foreach (var edge in mainFace.edges)
+			{
+				faceWingedEdgesData.Add(new EdgeData(PbMesh, edge));
+			}
+			var proxy = new EdgeProximitySelector(faceWingedEdgesData);
+			return proxy.CalculateProximity(minorEdge);
+		}
+		
 		public EdgeData AdjustEndPosition(EdgeData toEdge, float roadSize = 1f)
 		{
 			if (EdgeGeometry.Edges.Count == 0)
 				throw new Exception("No edges calculated yet");
 
-			if (!EdgeGeometry.GetClosesEdge(toEdge.Center, out var edgeData))
-				throw new Exception("Cant find proper edge to snap");
+			if (!EdgeGeometry.GetClosesEdge(toEdge.Center, out var edgeData, EdgeGeometry.Type.Cap))
+				if(!EdgeGeometry.GetClosesEdge(toEdge.Center, out edgeData, EdgeGeometry.Type.External))
+					throw new Exception("Cant find proper edge to snap");
 			
-			Debug.Log($"Closes edge to snap [{PbMesh.name}]: {edgeData.Center} -> {toEdge.Center}");
-	
-			Vector2 dir = Vector2.zero;
+			Vector2 dir;
 			try
 			{
 				dir = EdgeGeometry.CalculateDirectionFromEdge(edgeData);
@@ -141,12 +151,11 @@ namespace Tomi.Geometry
 				return new EdgeData();
 			}
 
-			var length = (edgeData.Center - toEdge.Center).magnitude * roadSize;
+			var length = Vector2.Distance(toEdge.Center, edgeData.Center) * roadSize;
+			
 			PbMesh.TranslateVertices(new[] {edgeData.Edge}, dir * length);
 			UpdatePbMesh();
-			EdgeGeometry.GetClosesEdge(toEdge.Center, out edgeData);
-			_previousModifications.Add(toEdge, edgeData);
-			return edgeData;
+			return EdgeGeometry.Edges.Find(f => f.Edge == edgeData.Edge);
 		}
 
 		private void InitGeometry()

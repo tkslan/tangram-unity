@@ -48,11 +48,8 @@ namespace Tomi
 			{
 				var point = intersection.ConnectionPoint;
 				
-				if (point.MinorRoad.Builder.AlteredBefore)
-					continue;
-				
-				if (point.MainRoad.IsValid)
-					point.UpdateRoadConnectionsMesh();
+				if (point.MainRoadPointIndex > 0)
+					point.Connect();
 			}
 		}
 

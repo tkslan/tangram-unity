@@ -29,49 +29,34 @@ namespace Tomi.Intersection
 		{
 			Point = point.ToVector2();
 		}
-		EdgeData GetBestEdgeFromFace(Face mainFace, EdgeData minorEdge)
-		{
-			var faceWingedEdgesData = new List<EdgeData>();
-			foreach (var edge in mainFace.edges)
-			{
-				faceWingedEdgesData.Add(new EdgeData(MainRoad.Builder.PbMesh, edge));
-			}
-			var proxy = new EdgeProximitySelector(faceWingedEdgesData);
-			return proxy.CalculateProximity(minorEdge);
-		}
 		
-		public void UpdateRoadConnectionsMesh()
+		
+		public void Connect()
 		{
 			var main = MainRoad.Builder;
 			var minor = MinorRoad.Builder;
 			
 			var newFace = main.EdgeGeometry.BevelAtPoint(Point);
-
 			if (newFace != null)
-			{
 				MainRoad.Builder.UpdatePbMesh();
-			}
 
 			var edgeToSnap = main.EdgeGeometry.ReturnClosestEdgeOnMesh(Point);
-			var big = MainRoad.PolylineOptions.Width > 500;
-			var edgeData = MinorRoad.Builder.AdjustEndPosition(edgeToSnap, big ? 2 : 1f);
-
+			var edgeData = minor.AdjustEndPosition(edgeToSnap, 2f);
+			
 			if (newFace != null)
+				edgeToSnap = main.GetBestEdgeFromFace(newFace, edgeData);
+
+			if (edgeToSnap.Valid && edgeData.Valid)
 			{
-				try
-				{
-					edgeToSnap = GetBestEdgeFromFace(newFace, edgeData);
-				}
-				catch (Exception ex)
-				{
-					Debug.LogError("No proximity points found");
-				}
+				main.EdgeGeometry.ResizeEdge(edgeToSnap);
+				SnapVerticles(main.PbMesh, edgeToSnap, minor.PbMesh, edgeData);
+				Debug.Log($"Snap[({main.PbMesh.name}){edgeData.Center}]->({minor.PbMesh.name}){edgeToSnap.Center}");
+			}
+			else
+			{
+				Debug.LogError($"Error on [({main.PbMesh.name})->({minor.PbMesh.name})");
 			}
 
-			main.EdgeGeometry.ResizeEdge(edgeToSnap);
-			SnapVerticles(main.PbMesh, edgeToSnap, minor.PbMesh, edgeData);
-			Debug.Log($"Edge to snap [{edgeToSnap},{edgeData.Center}]:{edgeToSnap.Center}");
-			
 			//Combine(pbMeshMain, pbMeshMinor);
 		}
 		

@@ -22,7 +22,7 @@ namespace Tomi.Geometry
 			_data = new List<EdgeData>(edges);
 		}
 
-		public EdgeData CalculateProximity(EdgeData toEdge)
+		public EdgeData CalculateProximity(EdgeData toEdge, float threshold = DotThreshold)
 		{
 			var proximities = new List<Proximity>();
 
@@ -40,11 +40,11 @@ namespace Tomi.Geometry
 			}
 
 			var niceDot = new List<Proximity>();
-			niceDot.AddRange(proximities.FindAll(f => Mathf.Abs(f.Dot) > Mathf.Abs(DotThreshold)));
+			niceDot.AddRange(proximities.FindAll(f => Mathf.Abs(f.Dot) > threshold));
+			
 			if (niceDot.Count == 0)
 			{
-				throw new Exception("No points found");
-				niceDot.Add(proximities.OrderByDescending(f => f.Dot).FirstOrDefault());
+				return CalculateProximity(toEdge, threshold - 0.05f);
 			}
 
 			var bestEdge = niceDot.OrderBy(o => o.Distance).FirstOrDefault();
