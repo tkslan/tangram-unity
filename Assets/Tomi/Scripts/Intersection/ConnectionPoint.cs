@@ -38,34 +38,32 @@ namespace Tomi.Intersection
 			MainRoad.Builder.UpdatePbMesh();
 			return newFace;
 		}
+		
 		public void Connect()
 		{
 			var main = MainRoad.Builder;
 			var minor = MinorRoad.Builder;
 
 			var newFace = PrepareConnection();
-			
+
 			var edgeToSnap = main.EdgeGeometry.ReturnClosestEdgeOnMesh(Point);
-			var edgeData = minor.AdjustEndPosition(edgeToSnap, 2f);
+			var edgeData = minor.AdjustEndPosition(edgeToSnap, 3f);
 			
 			if (newFace != null)
 				edgeToSnap = main.GetBestEdgeFromFace(newFace, edgeData);
 
-			if (edgeToSnap.Valid && edgeData.Valid)
-			{
-				main.EdgeGeometry.ResizeEdge(edgeToSnap);
-				SnapVerticles(main.PbMesh, edgeToSnap, minor.PbMesh, edgeData);
-				Debug.Log($"Snap[({main.PbMesh.name}){edgeData.Center}]->({minor.PbMesh.name}){edgeToSnap.Center}");
-			}
-			else
+			if (!edgeToSnap.Valid || !edgeData.Valid)
 			{
 				Debug.LogError($"Error on [({main.PbMesh.name})->({minor.PbMesh.name})");
+				return;
 			}
-
-			//Combine(pbMeshMain, pbMeshMinor);
+			
+			main.EdgeGeometry.ResizeEdge(edgeToSnap);
+			SnapVertices(main.PbMesh, edgeToSnap, minor.PbMesh, edgeData);
+			Debug.Log($"Snap[({main.PbMesh.name}){edgeData.Center}]->({minor.PbMesh.name}){edgeToSnap.Center}");
 		}
 		
-		private void SnapVerticles(ProBuilderMesh pbMeshMain, EdgeData edgeToSnap, ProBuilderMesh pbMeshMinor, EdgeData edgeData)
+		private void SnapVertices(ProBuilderMesh pbMeshMain, EdgeData edgeToSnap, ProBuilderMesh pbMeshMinor, EdgeData edgeData)
 		{
 			var mainVertA = pbMeshMain.VerticesInWorldSpace()[edgeToSnap.Edge.b];
 			var mainVertB = pbMeshMain.VerticesInWorldSpace()[edgeToSnap.Edge.a];

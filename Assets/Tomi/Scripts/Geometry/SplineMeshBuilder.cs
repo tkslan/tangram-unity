@@ -120,14 +120,20 @@ namespace Tomi.Geometry
 			return modifiedBefore;
 		}
 
+		private List<EdgeData> GetEdgesFromFace(Face face)
+		{
+			var edges = PbMesh.GetPerimeterEdges(new[] {face});
+			var edgesData = new List<EdgeData>();
+			foreach (var edge in edges)
+			{
+				var e = EdgeGeometry.Edges.Find(f => f.Edge == edge);
+				edgesData.Add(e);
+			}
+			return edgesData;
+		}
 		public EdgeData GetBestEdgeFromFace(Face mainFace, EdgeData minorEdge)
 		{
-			var faceWingedEdgesData = new List<EdgeData>();
-			foreach (var edge in mainFace.edges)
-			{
-				faceWingedEdgesData.Add(new EdgeData(PbMesh, edge));
-			}
-			var proxy = new EdgeProximitySelector(faceWingedEdgesData);
+			var proxy = new EdgeProximitySelector(GetEdgesFromFace(mainFace));
 			var point= proxy.CalculateProximity(minorEdge);
 			if (PbMesh.name.Equals("328247473"))
 			{
@@ -159,9 +165,9 @@ namespace Tomi.Geometry
 				return new EdgeData();
 			}
 
-			var length = Vector2.Distance(toEdge.Center, edgeData.Center) * roadSize;
+			var length = Vector2.Distance(toEdge.Center, edgeData.Center);
 			
-			PbMesh.TranslateVertices(new[] {edgeData.Edge}, dir * length);
+			PbMesh.TranslateVertices(new[] {edgeData.Edge}, dir * length * roadSize);
 			UpdatePbMesh();
 			return EdgeGeometry.Edges.Find(f => f.Edge == edgeData.Edge);
 		}

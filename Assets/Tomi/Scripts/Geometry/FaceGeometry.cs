@@ -35,7 +35,7 @@ namespace Tomi.Geometry
 			return true;
 		}
 
-		private int RemoveToTightFaces(ProBuilderMesh pbMesh, Vector2 startPoint, float distance = 0.5f)
+		public int RemoveToTightFaces(Vector2 startPoint, float distance = 0.5f)
 		{
 			if (!FindClosestFacesToPoint(startPoint, out var facesToCheck))
 				return -1;
@@ -49,9 +49,9 @@ namespace Tomi.Geometry
 			
 				if (Vector2.Distance(pair.Value, startPoint) < distance)
 				{
-					pbMesh.DeleteFace(prevFace);
-					pbMesh.ToMesh();
-					pbMesh.Refresh();
+					PbMesh.DeleteFace(prevFace);
+					PbMesh.ToMesh();
+					PbMesh.Refresh();
 					count++;
 					Debug.LogWarning($"Removed face:{pair.Key}");
 				}
@@ -61,9 +61,7 @@ namespace Tomi.Geometry
 				prevFace = nextFace;
 			}
 
-			pbMesh.WeldVertices(pbMesh.faces.SelectMany(s => s.indexes), distance);
-			pbMesh.ToMesh(MeshTopology.Quads);
-			pbMesh.Refresh();
+			PbMesh.WeldVertices(PbMesh.faces.SelectMany(s => s.indexes), distance);
 			return count;
 		}
 		
