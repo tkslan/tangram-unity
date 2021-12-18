@@ -33,12 +33,12 @@ namespace Tomi.Geometry
 			{
 				return new EdgeData(pbMesh, edge);
 			}
-			public void CheckIsInternal(List<Vector3> points)
+			public void CheckIsInternal(List<Vector2> points)
 			{
 				var margin = 0.2f;
 				var center = Center;
 				
-				var findIndex = points.FindIndex(f => Vector2.Distance(f.ToVector2(), center) < margin);
+				var findIndex = points.FindIndex(f => Vector2.Distance(f, center) < margin);
 				
 				//Don't include caps (first and last point) as internal
 				if(findIndex > 0 && findIndex < points.Count - 1)
@@ -47,6 +47,8 @@ namespace Tomi.Geometry
 				if(findIndex >= 0)
 					Index = findIndex;
 			}
+
+		
 			public Vector2 GetCloserEdgePosition(Vector2 pos)
 			{
 				var aDist = Vector2.Distance(PosA, pos);

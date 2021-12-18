@@ -36,7 +36,7 @@ namespace Tomi.Geometry
 					Edge = data,
 					Plane = new Plane(data.PosA, data.PosB, toEdge.Center),
 				};
-				p.Score = p.Dot + p.Distance;
+				p.Score = p.Dot + (1 - p.Distance);
 				proximities.Add(p);
 			}
 
@@ -46,13 +46,14 @@ namespace Tomi.Geometry
 			
 			if (niceDot.Count == 0)
 			{
-				if (threshold <= 0.5f)
+				if (threshold <= 0.2f)
 					return new EdgeData();
 				
-				return CalculateProximity(toEdge, threshold - 0.1f);
+				return CalculateProximity(toEdge, threshold - 0.15f);
 			}
 
-			var bestEdge = niceDot.OrderByDescending(o => o.Dot).FirstOrDefault();
+			var scoreOrder = niceDot.OrderByDescending(o => o.Score).ToArray();
+			var bestEdge = scoreOrder.FirstOrDefault();
 			return bestEdge.Edge;
 		}
 	}

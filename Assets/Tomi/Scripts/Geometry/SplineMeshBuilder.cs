@@ -124,25 +124,23 @@ namespace Tomi.Geometry
 		{
 			var edges = PbMesh.GetPerimeterEdges(new[] {face});
 			var edgesData = new List<EdgeData>();
+			
 			foreach (var edge in edges)
 			{
-				var e = EdgeGeometry.Edges.Find(f => f.Edge == edge);
+				var e = EdgeGeometry.Edges.Find(f=>f.Edge == edge && !f.Internal);
 				edgesData.Add(e);
 			}
+			
+			if (edgesData.Count == 0)
+				Debug.LogError("Cant find external edges from Face");
+			
 			return edgesData;
 		}
 		public EdgeData GetBestEdgeFromFace(Face mainFace, EdgeData minorEdge)
 		{
 			var proxy = new EdgeProximitySelector(GetEdgesFromFace(mainFace));
 			var point= proxy.CalculateProximity(minorEdge);
-			if (PbMesh.name.Equals("328247473"))
-			{
-				return point;
-			}
-			else
-			{
-				return point;
-			}
+			return point;
 		}
 		
 		public EdgeData AdjustEndPosition(EdgeData toEdge, float roadSize = 1f)
@@ -189,7 +187,7 @@ namespace Tomi.Geometry
 			_proMesh.Refresh();
 			EdgeGeometry.Refresh();
 			FaceGeometry.Refresh();
-			//DrawDebug();
+			DrawDebug();
 		}
 
 		private List<GameObject> _gameObjects;

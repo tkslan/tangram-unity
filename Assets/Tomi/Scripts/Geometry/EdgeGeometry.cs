@@ -29,7 +29,7 @@ namespace Tomi.Geometry
 			_beveledPoints = new Dictionary<Vector2, Face>();
 			Refresh();
 		}
-
+		
 		private List<EdgeData> GetEdgesByType(Type type)
 		{
 			return type switch
@@ -39,6 +39,21 @@ namespace Tomi.Geometry
 				Type.Cap => Edges.FindAll(f => !f.Internal && f.Index >= 0),
 				_ => Edges
 			};
+		}
+
+		public bool MoveBackNextEdges(Vector2 point)
+		{
+			if (!FindClosestEdges(point, out var keyValuePairs))
+				return false;
+
+			if (keyValuePairs.Count < 2)
+				return false;
+			
+			var e0 = keyValuePairs[0];
+			var e1 = keyValuePairs[1];
+			var dir = (e1.Value - e0.Value).normalized;
+			TranslateEdge(e0.Key, dir);
+			return true;
 		}
 		internal bool GetClosesEdge(Vector2 p, out EdgeData edge, Type type = Type.Any, bool ignoreAtPoint = false)
 		{
@@ -62,7 +77,7 @@ namespace Tomi.Geometry
 			return hit && edge.Valid;
 		}
 
-		private bool FindClosestEdges(Vector2 point, out List<KeyValuePair<Edge, Vector2>> edges)
+		private bool FindClosestEdges(Vector2 point, out List<KeyValuePair<EdgeData, Vector2>> edges)
 		{
 			var orderedList = new Dictionary<Edge, float>();
 
@@ -76,7 +91,7 @@ namespace Tomi.Geometry
 				}
 			}
 
-			edges = new List<KeyValuePair<Edge, Vector2>>();
+			edges = new List<KeyValuePair<EdgeData, Vector2>>();
 			
 			if (orderedList.Count == 0)
 				return false;
@@ -84,7 +99,15 @@ namespace Tomi.Geometry
 			foreach (var edge in orderedList)
 			{
 				var pos = Math.Average(PbMesh.positions, new[] { edge.Key.a, edge.Key.b }).ToVector2();
-				edges.Add(new KeyValuePair<Edge, Vector2>(edge.Key, pos));
+				var ed = Edges.Find(f => f.Edge == edge.Key);
+				
+				if (!ed.Valid)
+				{
+					Debug.LogError("Cant find edge data");
+					continue;
+				}
+
+				edges.Add(new KeyValuePair<EdgeData, Vector2>(ed, pos));
 			}
 
 			return true;
@@ -128,7 +151,6 @@ namespace Tomi.Geometry
 				{
 					Points.Add(data.Center);
 				}
-				
 			}
 			
 			_beveledPoints.Add(point, face);
@@ -153,14 +175,6 @@ namespace Tomi.Geometry
 			Edges.Clear();
 			Edges.AddRange(edgeData);
 		}
-		
-		private Vector2 CalculateDirectionFromEdgeIndexZero()
-		{
-			var first = Edges.Find(f => f.Index == 0);
-			if (!GetClosesEdge(first.Center, out var second, Type.Internal, true))
-				throw new Exception("Cant set second edge");
-			return (first.Center - second.Center).normalized;
-		}
 
 		internal Vector2 CalculateDirectionFromEdge(EdgeData edgeData)
 		{
@@ -183,30 +197,6 @@ namespace Tomi.Geometry
 				Debug.LogError("Can't return closest edge");
 			Debug.Log($"Closes from {point} {edgeData.Center}");
 			return edgeData;
-		}
-		
-		//TODO: Refactor to separate FacesService ?
-		public List<EdgeData> GetFaceWingedEdges(Face face)
-		{
-			var wc = WingedEdge.GetWingedEdges(PbMesh, new[] {face});
-			var edgeDatas = new List<EdgeData>();
-			foreach (var we in wc.FindAll(f => f.opposite == null))
-			{
-				edgeDatas.Add(new EdgeData(PbMesh, we.edge.local));
-			}
-
-			return edgeDatas;
-		}
-
-		public void ResizeEdge(EdgeData edgeData)
-		{
-			//Adjust size in case of low width
-			if (edgeData.Length >= 0.9f)
-				return;
-			
-			var min = 1f - edgeData.Length;
-			PbMesh.TranslateVertices(new [] {edgeData.Edge.a}, edgeData.Dir * min / 2);
-			PbMesh.TranslateVertices(new [] {edgeData.Edge.b}, -edgeData.Dir * min / 2);
 		}
 	}
 }
