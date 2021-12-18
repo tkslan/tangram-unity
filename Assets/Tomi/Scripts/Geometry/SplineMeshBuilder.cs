@@ -163,10 +163,10 @@ namespace Tomi.Geometry
 				return new EdgeData();
 			}
 
-			var length = Vector2.Distance(toEdge.Center, edgeData.Center);
+			var length = Vector2.Distance(toEdge.Center, edgeData.Center)+0.1f;
 			
 			TranslateEdge(edgeData,dir * length);
-			UpdatePbMesh();
+			//UpdatePbMesh();
 			return EdgeGeometry.Edges.Find(f => f.Edge == edgeData.Edge);
 		}
 
@@ -187,7 +187,7 @@ namespace Tomi.Geometry
 			_proMesh.Refresh();
 			EdgeGeometry.Refresh();
 			FaceGeometry.Refresh();
-			DrawDebug();
+			//DrawDebug();
 		}
 
 		private List<GameObject> _gameObjects;

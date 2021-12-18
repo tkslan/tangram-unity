@@ -32,9 +32,18 @@ namespace Tomi.Intersection
 
 		private Face PrepareConnection()
 		{
-			var newFace = MainRoad.Builder.EdgeGeometry.BevelAtPoint(Point) ??
+			var newFace = MainRoad.Builder.EdgeGeometry.BevelAtPoint(Point, out var sideEdges) ??
 			              MainRoad.Builder.FaceGeometry.MergeFacesAt(Point);
-
+			
+			if (sideEdges.Count == 2)
+			{
+				var dist = Vector2.Distance(sideEdges[0].Center, sideEdges[1].Center);
+				if (dist < 0.5f)
+				{
+					Debug.LogError($"Narrow at {MainRoad.Name}");
+					//newFace = MainRoad.Builder.FaceGeometry.MergeFacesAt(Point);
+				}
+			}
 			MainRoad.Builder.UpdatePbMesh();
 			return newFace;
 		}
@@ -46,8 +55,17 @@ namespace Tomi.Intersection
 			var updated = false;
 			var newFace = PrepareConnection();
 
-			var edgeToSnap = main.EdgeGeometry.ReturnClosestEdgeOnMesh(Point);
-			minor.FaceGeometry.MoveBackClosestFace(Point);
+			var point = Point;
+			
+			//Move faces backwards
+			//minor.FaceGeometry.MoveBackClosestFace(point);
+			//Update point to first face
+			if (minor.FaceGeometry.ClosestFace(point, out var closest))
+				point = closest.Key;
+
+			//Search for closest edge from face center point
+			var edgeToSnap = main.EdgeGeometry.ReturnClosestEdgeOnMesh(point);
+			
 			var edgeData = minor.AdjustEndPosition(edgeToSnap, 1f);
 
 			if (newFace != null)
@@ -55,7 +73,7 @@ namespace Tomi.Intersection
 				var foundEdge = main.GetBestEdgeFromFace(newFace, edgeData);
 				if (foundEdge.Valid)
 				{
-					edgeToSnap = foundEdge;
+					//edgeToSnap = foundEdge;
 					updated = true;
 				}
 			}
@@ -66,9 +84,10 @@ namespace Tomi.Intersection
 				return;
 			}
 			
-			//main.EdgeGeometry.ResizeEdge(edgeToSnap);
+			main.EdgeGeometry.ResizeEdge(edgeToSnap);
 			Debug.Log($"Snap[({main.PbMesh.name}){edgeData.Center}]->({minor.PbMesh.name}){edgeToSnap.Center} U:{updated}");
-			//SnapVertices(main.PbMesh, edgeToSnap, minor.PbMesh, edgeData);
+			SnapVertices(main.PbMesh, edgeToSnap, minor.PbMesh, edgeData);
+			//Combine(main.PbMesh, minor.PbMesh);
 		}
 		
 		private void SnapVertices(ProBuilderMesh pbMeshMain, EdgeData edgeToSnap, ProBuilderMesh pbMeshMinor, EdgeData edgeData)
@@ -85,7 +104,7 @@ namespace Tomi.Intersection
 			pbMeshMinor.ToMesh();
 			pbMeshMinor.Refresh();
 		}
-		private void Combine(ProBuilderMesh pbMeshMain, ProBuilderMesh pbMeshMinor)
+		public void Combine(ProBuilderMesh pbMeshMain, ProBuilderMesh pbMeshMinor)
 		{
 			//Combine to single mesh
 			var mesh = CombineMeshes.Combine(new[] {pbMeshMain, pbMeshMinor}, pbMeshMain);
@@ -93,7 +112,7 @@ namespace Tomi.Intersection
 			first.WeldVertices(mesh[0].faces.SelectMany(s => s.indexes), 0.2f);
 			first.ToMesh(MeshTopology.Quads);
 			first.Refresh();
-
+			MinorRoad.Invalidate();
 			GameObject.DestroyImmediate(MinorRoad.Builder.MeshObject);
 		}
 		

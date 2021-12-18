@@ -11,10 +11,10 @@ namespace Tomi.Geometry
 	{
 		public FaceGeometry(ProBuilderMesh mesh, List<Vector3> points) : base(mesh, points) { }
 		public override void Refresh() { }
-		public bool FindClosestFacesToPoint(Vector2 point, out List<KeyValuePair<Face, Vector2>> orderedFaces)
+		public bool FindClosestFacesToPoint(Vector2 point, out List<KeyValuePair<Vector2,Face>> orderedFaces)
 		{
-			orderedFaces = new List<KeyValuePair<Face, Vector2>>();
-			var orderedList = new Dictionary<Face, Vector2>();
+			orderedFaces = new List<KeyValuePair<Vector2,Face>>();
+			var orderedList = new Dictionary<Vector2,Face>();
 			//Don't use on to small objects
 			if (PbMesh.faceCount < 2)
 				return false;
@@ -25,13 +25,23 @@ namespace Tomi.Geometry
 					.ToList();
 				//calculate average position of face
 				var pos = Math.Average(edgesCenter);
-				orderedList.Add(face, pos);
+				orderedList.Add(pos,face);
 			}
-
+			
 			if (orderedList.Count == 0)
 				return false;
 
-			orderedFaces.AddRange(orderedList.OrderBy(o => Vector2.Distance(o.Value, point)));
+			orderedFaces.AddRange(orderedList.OrderBy(o => Vector2.Distance(o.Key, point)));
+			return true;
+		}
+
+		public bool ClosestFace(Vector2 point, out KeyValuePair<Vector2,Face> face)
+		{
+			face = new KeyValuePair<Vector2,Face>();
+			if (!FindClosestFacesToPoint(point, out var facesToCheck))
+				return false;
+			
+			face = facesToCheck[0];
 			return true;
 		}
 
@@ -45,17 +55,17 @@ namespace Tomi.Geometry
 
 			var f1 = facesToCheck[1];
 			var f0 = facesToCheck[0];
-			var dir = (f1.Value - f0.Value).normalized;
+			var dir = (f1.Key - f0.Key).normalized;
 			var dirV3 = new Vector3(dir.x, 0, dir.y);
 			
-			PbMesh.TranslateVertices(new []{f0.Key}, dirV3 / 2);
-			PbMesh.TranslateVertices(new [] {f1.Key},dirV3 / 4);
+			PbMesh.TranslateVertices(new []{f0.Value,f1.Value}, dirV3*.5f);
 			//move back internal edges 
-			var edges = WingedEdge.GetWingedEdges(PbMesh, new []{f1.Key, f0.Key});
+			var edges = WingedEdge.GetWingedEdges(PbMesh, new []{f1.Value});
 			foreach (var internalEdge in edges.FindAll(f=>f.opposite != null))
 			{
-				PbMesh.TranslateVertices(new []{internalEdge.edge.local}, -dirV3 / 3);
+				PbMesh.TranslateVertices(new []{internalEdge.edge.local}, -dirV3*1.5f);
 			}
+			
 			return true;
 		}
 		public int RemoveToTightFaces(Vector2 startPoint, float distance = 0.5f)
@@ -64,15 +74,15 @@ namespace Tomi.Geometry
 				return -1;
 
 			var count = 0;
-			var prevFace = facesToCheck[0].Key;
+			var prevFace = facesToCheck[0].Value;
 			foreach (var pair in facesToCheck)
 			{
-				var nextFace = pair.Key;
+				var nextFace = pair.Value;
 				if (nextFace == prevFace) continue;
 			
-				if (Vector2.Distance(pair.Value, startPoint) < distance)
+				if (Vector2.Distance(pair.Key, startPoint) < distance)
 				{
-					PbMesh.DeleteFace(prevFace);
+					MergeFacesAt(pair.Key);
 					PbMesh.ToMesh();
 					PbMesh.Refresh();
 					count++;
@@ -80,7 +90,7 @@ namespace Tomi.Geometry
 				}
 
 				//set next point
-				startPoint = pair.Value;
+				startPoint = pair.Key;
 				prevFace = nextFace;
 			}
 
@@ -95,7 +105,7 @@ namespace Tomi.Geometry
 			
 			var first = faces[0];
 			var second = faces[1];
-			return MergeElements.Merge(PbMesh, new[] {first.Key, second.Key});
+			return MergeElements.Merge(PbMesh, new[] {first.Value, second.Value});
 		}
 	}
 }

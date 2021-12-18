@@ -113,8 +113,9 @@ namespace Tomi.Geometry
 			return true;
 		}
 
-		public Face BevelAtPoint(Vector2 point)
+		public Face BevelAtPoint(Vector2 point, out List<EdgeData> sideEdges)
 		{
+			sideEdges = new List<EdgeData>();
 			if (_beveledPoints.ContainsKey(point))
 			{
 				Debug.Log($"Point [{point}] already beveled");
@@ -149,6 +150,7 @@ namespace Tomi.Geometry
 				var dot = Vector2.Dot(data.Dir, edgeData.Dir);
 				if (Mathf.Abs(dot) > 0.9f)
 				{
+					sideEdges.Add(data);
 					Points.Add(data.Center);
 				}
 			}
@@ -197,6 +199,16 @@ namespace Tomi.Geometry
 				Debug.LogError("Can't return closest edge");
 			Debug.Log($"Closes from {point} {edgeData.Center}");
 			return edgeData;
+		}
+
+		public void ResizeEdge(EdgeData edgeToSnap)
+		{
+			if (edgeToSnap.Length < 0.5f)
+			{
+				var dir = new Vector3(edgeToSnap.Dir.x, 0, edgeToSnap.Dir.y);
+				PbMesh.TranslateVertices(new []{edgeToSnap.Edge.a}, dir * (0.5f - edgeToSnap.Length /3));
+				PbMesh.TranslateVertices(new []{edgeToSnap.Edge.b}, -dir * (0.5f - edgeToSnap.Length /3));
+			}
 		}
 	}
 }
