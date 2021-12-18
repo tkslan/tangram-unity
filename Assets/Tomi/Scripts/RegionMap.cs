@@ -228,8 +228,9 @@ namespace Mapzen
         public void CreateTjunctionAngleTest()
         {
             #region Angled t-junctions
-
-            var polylineOptions = DefaultOptions();
+            
+            var wideRoad = DefaultOptions();
+            wideRoad.Width = 1f;
             var testAngle = new GameObject("AngleTest");
 
             var taMainHandler = new SplineHandler(new List<Vector2>()
@@ -239,7 +240,7 @@ namespace Mapzen
                 new (0.5f, 0),
                 new (0, -1.75f),
                 new (-2,-3),
-            }, "0000", Matrix4x4.identity, polylineOptions);
+            }, "0000", Matrix4x4.identity, wideRoad);
             
             var firstJunction = new SplineHandler(new List<Vector2>()
             {
@@ -247,7 +248,7 @@ namespace Mapzen
                 new (0,3),
                 new (0,5f),
                 new (0, 7),
-            }, "0001", Matrix4x4.identity, polylineOptions);
+            }, "0001", Matrix4x4.identity, DefaultOptions());
             
             var secondJunction = new SplineHandler(new List<Vector2>()
             {
@@ -255,15 +256,17 @@ namespace Mapzen
                 new (2,-2),
                 new (3, -3),
                 new (4, -4),
-            }, "0002", Matrix4x4.identity, polylineOptions);
+            }, "0002", Matrix4x4.identity, DefaultOptions());
 
             var thirdJunction = new SplineHandler(new List<Vector2>()
             {
-                new(0.5f, 0),
-                new(-1, 0),
-                new(-3, 0),
                 new(-4, 0),
-            }, "0003", Matrix4x4.identity, polylineOptions);
+                new(-3, 0),
+                new(-2, 0),
+                new(-1, 0),
+                new (0f,0),
+                new(0.5f,0)
+            }, "0003", Matrix4x4.identity,DefaultOptions());
             
             var angleController = testAngle.AddComponent<SplinesController>();
             

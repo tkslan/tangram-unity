@@ -50,6 +50,7 @@ namespace Tomi
 				
 				if (point.MainRoadPointIndex > 0)
 					point.Connect();
+				
 			}
 		}
 

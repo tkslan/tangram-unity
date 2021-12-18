@@ -43,14 +43,18 @@ namespace Tomi.Intersection
 		{
 			var main = MainRoad.Builder;
 			var minor = MinorRoad.Builder;
-
+			var updated = false;
 			var newFace = PrepareConnection();
 
 			var edgeToSnap = main.EdgeGeometry.ReturnClosestEdgeOnMesh(Point);
+			minor.FaceGeometry.MoveBackClosestFace(Point);
 			var edgeData = minor.AdjustEndPosition(edgeToSnap, 3f);
-			
+
 			if (newFace != null)
+			{
 				edgeToSnap = main.GetBestEdgeFromFace(newFace, edgeData);
+				updated = true;
+			}
 
 			if (!edgeToSnap.Valid || !edgeData.Valid)
 			{
@@ -60,7 +64,7 @@ namespace Tomi.Intersection
 			
 			main.EdgeGeometry.ResizeEdge(edgeToSnap);
 			SnapVertices(main.PbMesh, edgeToSnap, minor.PbMesh, edgeData);
-			Debug.Log($"Snap[({main.PbMesh.name}){edgeData.Center}]->({minor.PbMesh.name}){edgeToSnap.Center}");
+			Debug.Log($"Snap[({main.PbMesh.name}){edgeData.Center}]->({minor.PbMesh.name}){edgeToSnap.Center} U:{updated}");
 		}
 		
 		private void SnapVertices(ProBuilderMesh pbMeshMain, EdgeData edgeToSnap, ProBuilderMesh pbMeshMinor, EdgeData edgeData)

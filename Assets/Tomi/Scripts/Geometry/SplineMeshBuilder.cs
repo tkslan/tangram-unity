@@ -167,9 +167,15 @@ namespace Tomi.Geometry
 
 			var length = Vector2.Distance(toEdge.Center, edgeData.Center);
 			
-			PbMesh.TranslateVertices(new[] {edgeData.Edge}, dir * length * roadSize);
+			TranslateEdge(edgeData,dir * length);
 			UpdatePbMesh();
 			return EdgeGeometry.Edges.Find(f => f.Edge == edgeData.Edge);
+		}
+
+		public void TranslateEdge(EdgeData edgeData, Vector2 offset)
+		{
+			var offsetV3 = new Vector3(offset.x, 0, offset.y);
+			PbMesh.TranslateVertices(new [] {edgeData.Edge}, offsetV3);
 		}
 
 		private void InitGeometry()

@@ -21,11 +21,11 @@ namespace Tomi.Geometry
 
 			foreach (var face in PbMesh.faces)
 			{
-				var edgesCenter = face.edges.Select(edge => Math.Average(PbMesh.positions, new[] {edge.a, edge.b}))
+				var edgesCenter = face.edges.Select(edge => Math.Average(PbMesh.positions, new[] {edge.a, edge.b}).ToVector2())
 					.ToList();
 				//calculate average position of face
 				var pos = Math.Average(edgesCenter);
-				orderedList.Add(face, pos.ToVector2());
+				orderedList.Add(face, pos);
 			}
 
 			if (orderedList.Count == 0)
@@ -35,6 +35,29 @@ namespace Tomi.Geometry
 			return true;
 		}
 
+		public bool MoveBackClosestFace(Vector2 startPoint)
+		{
+			if (!FindClosestFacesToPoint(startPoint, out var facesToCheck))
+				return false;
+
+			if (facesToCheck.Count < 2)
+				return false;
+
+			var f1 = facesToCheck[1];
+			var f0 = facesToCheck[0];
+			var dir = (f1.Value - f0.Value).normalized;
+			var dirV3 = new Vector3(dir.x, 0, dir.y);
+			
+			PbMesh.TranslateVertices(new []{f0.Key}, dirV3 / 2);
+			PbMesh.TranslateVertices(new [] {f1.Key},dirV3 / 4);
+			//move back internal edges 
+			var edges = WingedEdge.GetWingedEdges(PbMesh, new []{f1.Key, f0.Key});
+			foreach (var internalEdge in edges.FindAll(f=>f.opposite != null))
+			{
+				PbMesh.TranslateVertices(new []{internalEdge.edge.local}, -dirV3 / 3);
+			}
+			return true;
+		}
 		public int RemoveToTightFaces(Vector2 startPoint, float distance = 0.5f)
 		{
 			if (!FindClosestFacesToPoint(startPoint, out var facesToCheck))

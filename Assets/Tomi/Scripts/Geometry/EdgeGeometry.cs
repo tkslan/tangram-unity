@@ -62,7 +62,7 @@ namespace Tomi.Geometry
 			return hit && edge.Valid;
 		}
 
-		private KeyValuePair<Edge, Vector2> FindClosestEdgeToPoint(Vector2 point)
+		private bool FindClosestEdges(Vector2 point, out List<KeyValuePair<Edge, Vector2>> edges)
 		{
 			var orderedList = new Dictionary<Edge, float>();
 
@@ -76,16 +76,18 @@ namespace Tomi.Geometry
 				}
 			}
 
-			if (orderedList.Count > 0)
+			edges = new List<KeyValuePair<Edge, Vector2>>();
+			
+			if (orderedList.Count == 0)
+				return false;
+			
+			foreach (var edge in orderedList)
 			{
-				var orderedEnumerable = orderedList.OrderBy(o => o.Value).ToArray();
-				var first = orderedEnumerable[0];
-
-				var pos = Math.Average(PbMesh.positions, new[] { first.Key.a, first.Key.b });
-				return new KeyValuePair<Edge, Vector2>(first.Key,pos.ToVector2());
+				var pos = Math.Average(PbMesh.positions, new[] { edge.Key.a, edge.Key.b }).ToVector2();
+				edges.Add(new KeyValuePair<Edge, Vector2>(edge.Key, pos));
 			}
 
-			throw new Exception($"No faces in mesh {PbMesh}");
+			return true;
 		}
 
 		public Face BevelAtPoint(Vector2 point)
@@ -181,12 +183,6 @@ namespace Tomi.Geometry
 				Debug.LogError("Can't return closest edge");
 			Debug.Log($"Closes from {point} {edgeData.Center}");
 			return edgeData;
-			
-			var closestEdgeToPoint = FindClosestEdgeToPoint(point);
-		
-			var edge = EdgeData.CalculateForEdge(PbMesh, closestEdgeToPoint.Key);
-			Debug.Log($"Closes: {edge.Center}");
-			return edge;
 		}
 		
 		//TODO: Refactor to separate FacesService ?
@@ -212,7 +208,5 @@ namespace Tomi.Geometry
 			PbMesh.TranslateVertices(new [] {edgeData.Edge.a}, edgeData.Dir * min / 2);
 			PbMesh.TranslateVertices(new [] {edgeData.Edge.b}, -edgeData.Dir * min / 2);
 		}
-
-	
 	}
 }
