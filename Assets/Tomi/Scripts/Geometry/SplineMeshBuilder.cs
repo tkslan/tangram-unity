@@ -165,7 +165,7 @@ namespace Tomi.Geometry
 
 			var length = Vector2.Distance(toEdge.Center, edgeData.Center)+0.1f;
 			
-			TranslateEdge(edgeData,dir * length);
+			//TranslateEdge(edgeData,dir * length);
 			//UpdatePbMesh();
 			return EdgeGeometry.Edges.Find(f => f.Edge == edgeData.Edge);
 		}

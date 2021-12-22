@@ -55,15 +55,25 @@ namespace Tomi.Geometry
 
 			var f1 = facesToCheck[1];
 			var f0 = facesToCheck[0];
+			
 			var dir = (f1.Key - f0.Key).normalized;
 			var dirV3 = new Vector3(dir.x, 0, dir.y);
+			var edges = new List<WingedEdge>();
 			
-			PbMesh.TranslateVertices(new []{f0.Value,f1.Value}, dirV3*.5f);
+			//don't move back big spacy faces
+			if (Vector2.Distance(f0.Key, f1.Key) > 2f)
+			{
+				PbMesh.TranslateVertices(new[] {f0.Value}, dirV3 * .5f);
+			}
+			else
+			{
+				PbMesh.TranslateVertices(new[] {f0.Value, f1.Value}, dirV3 * .5f);
+				edges = WingedEdge.GetWingedEdges(PbMesh, new []{f1.Value});
+			}
 			//move back internal edges 
-			var edges = WingedEdge.GetWingedEdges(PbMesh, new []{f1.Value});
 			foreach (var internalEdge in edges.FindAll(f=>f.opposite != null))
 			{
-				PbMesh.TranslateVertices(new []{internalEdge.edge.local}, -dirV3*1.5f);
+				PbMesh.TranslateVertices(new []{internalEdge.edge.local}, -dirV3*0.5f);
 			}
 			
 			return true;

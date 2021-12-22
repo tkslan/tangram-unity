@@ -203,11 +203,14 @@ namespace Tomi.Geometry
 
 		public void ResizeEdge(EdgeData edgeToSnap)
 		{
+			Vector3 dir = Vector3.zero;
+
 			if (edgeToSnap.Length < 0.5f)
 			{
-				var dir = new Vector3(edgeToSnap.Dir.x, 0, edgeToSnap.Dir.y);
-				PbMesh.TranslateVertices(new []{edgeToSnap.Edge.a}, dir * (0.5f - edgeToSnap.Length /3));
-				PbMesh.TranslateVertices(new []{edgeToSnap.Edge.b}, -dir * (0.5f - edgeToSnap.Length /3));
+				dir = new Vector3(edgeToSnap.Dir.x, 0, edgeToSnap.Dir.y);
+
+				PbMesh.TranslateVertices(new[] {edgeToSnap.Edge.a}, dir * (0.5f - edgeToSnap.Length / 3));
+				PbMesh.TranslateVertices(new[] {edgeToSnap.Edge.b}, -dir * (0.5f - edgeToSnap.Length / 3));
 			}
 		}
 	}
